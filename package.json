@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "dist": "vite build && electron-builder -w",
     "lint": "eslint . --ext .ts,.tsx,.cjs,.cts,.mts",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
@@ -23,6 +24,7 @@
     "@typescript-eslint/parser": "^7.7.1",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.16",
+    "electron-builder": "^26.0.12",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react": "^7.34.1",
@@ -39,12 +41,42 @@
   },
   "dependencies": {
     "electron": "^31.0.2",
+    "electron-updater": "^6.3.9",
     "pidusage": "^3.0.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-virtualized-auto-sizer": "^1.0.26",
     "react-window": "^1.8.11",
     "tree-kill": "^1.2.2"
+  },
+  "build": {
+    "appId": "com.jathow.scriptsentinel",
+    "productName": "Script Sentinel",
+    "files": [
+      "dist/**",
+      "dist-electron/**",
+      "index.html",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "build"
+    },
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
+    }
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,css,md}": "prettier --write"

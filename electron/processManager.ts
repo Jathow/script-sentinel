@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import pidusage from 'pidusage';
 import treeKill from 'tree-kill';
 import { setTimeout as delay } from 'node:timers/promises';
+import { computeBackoffDelayMs, waitFor } from './backoff';
 import type { RuntimeStatus, ScriptDefinition, RuntimeStateSnapshot } from '../src/shared/types';
 import http from 'node:http';
 import https from 'node:https';
@@ -222,10 +223,26 @@ export class ProcessManager {
           // backoff with cap
           const maxRetries = script.maxRetries ?? 5;
           if (maxRetries === -1 || p!.retries < maxRetries) {
-            const waitMs = Math.min(30000, p!.backoffMs * Math.max(1, p!.retries + 1));
+            const abortController = new AbortController();
+            const waitMs = computeBackoffDelayMs(p!.retries + 1, {
+              baseMs: p!.backoffMs,
+              factor: 2,
+              maxMs: 30000,
+              jitter: 'full',
+            });
             p!.nextRestartAt = Date.now() + waitMs;
             this.emitStatus(id);
-            await delay(waitMs);
+            // Store controller on managed proc to allow cancellation on stop
+            (p as unknown as { backoffAbort?: AbortController }).backoffAbort = abortController;
+            try {
+              await waitFor(waitMs, abortController.signal);
+            } catch {
+              // canceled
+              (p as unknown as { backoffAbort?: AbortController }).backoffAbort = undefined;
+              p!.nextRestartAt = undefined;
+              return;
+            }
+            (p as unknown as { backoffAbort?: AbortController }).backoffAbort = undefined;
             p!.retries += 1;
             const { eventBus } = require('./events');
             eventBus.send('process:restart:event', { scriptId: id, attempt: p!.retries });
@@ -252,6 +269,9 @@ export class ProcessManager {
       return;
     }
     p.stopping = true;
+    // Cancel any pending backoff wait
+    const pending = (p as unknown as { backoffAbort?: AbortController }).backoffAbort;
+    if (pending) pending.abort();
     return new Promise((resolve) => {
       treeKill(p.child!.pid!, 'SIGTERM', () => {
         // The 'exit' handler will adjust state

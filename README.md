@@ -46,5 +46,8 @@ Use Settings → Import Config to load a test set of scripts. Example JSON struc
 }
 ```
 
+## User Guide
+- See `docs/USER_GUIDE.md` for detailed setup and operation instructions.
+
 
 

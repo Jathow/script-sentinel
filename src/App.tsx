@@ -119,6 +119,7 @@ export default function App() {
   const [editing, setEditing] = React.useState<ScriptDefinition | null>(null);
   const { toasts, add: addToast, remove: removeToast } = useToasts();
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const searchInputRef = React.useRef<HTMLInputElement | null>(null);
   React.useEffect(() => {
     window.api
       .ping()
@@ -219,6 +220,41 @@ export default function App() {
       return nameOk && statusOk && profileOk;
     });
   }, [scripts, query, statusFilter, profileFilter, statuses]);
+
+  // Keyboard shortcuts
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Ctrl/Cmd+K: focus search
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      // Ctrl/Cmd+Enter: start selected
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key === 'Enter') {
+        e.preventDefault();
+        void startSelected();
+      }
+      // Ctrl+Shift+S: stop all
+      if (e.ctrlKey && e.shiftKey && !e.altKey && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        void stopAll();
+      }
+      // Ctrl/Cmd+A: select all filtered
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'a') {
+        // only if focus is not inside input/textarea
+        const tag = (document.activeElement?.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea') return;
+        e.preventDefault();
+        setSelected((prev) => {
+          const next = { ...prev };
+          for (const s of filtered) next[s.id] = true;
+          return next;
+        });
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [filtered, startSelected, stopAll]);
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b0f14] to-[#0a0e13] text-slate-200">
       <header className="sticky top-0 z-10 border-b border-white/10 bg-black/30 backdrop-blur">
@@ -264,6 +300,7 @@ export default function App() {
           <div className="text-sm text-slate-400">Dark, modern server console theme</div>
           <div className="flex items-center gap-2">
             <input
+              ref={searchInputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name"

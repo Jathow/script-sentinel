@@ -3,6 +3,7 @@ import { LogsDrawer } from './components/LogsDrawer';
 import type { ScriptDefinition, Profile } from './shared/types';
 import { ScriptEditorModal } from './components/ScriptEditorModal';
 import { ProfilesSidebar } from './components/ProfilesSidebar';
+import { ProfileSummary } from './components/ProfileSummary';
 import { SettingsModal } from './components/SettingsModal';
 import { Toasts, useToasts } from './components/Toasts';
 import { ScriptCard } from './components/ScriptCard';
@@ -348,15 +349,12 @@ export default function App() {
           </div>
         </div>
         {profileFilter !== 'all' && (
-          <div className="mb-4 text-xs text-slate-400">
-            {(() => {
-              const prof = profiles.find((p) => p.id === profileFilter);
-              const ids = prof?.scriptIds ?? [];
-              const running = ids.filter((id) => (statuses[id]?.status ?? 'stopped') === 'running')
-                .length;
-              return `Profile ${prof?.name ?? ''}: ${running}/${ids.length} running`;
-            })()}
-          </div>
+          <ProfileSummary
+            profile={profiles.find((p) => p.id === profileFilter) ?? null}
+            statuses={statuses}
+            onStart={() => window.api.profiles.startAll(profileFilter)}
+            onStop={() => window.api.profiles.stopAll(profileFilter)}
+          />
         )}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3" role="region" aria-label="Scripts grid">
           {scripts.length === 0 ? (

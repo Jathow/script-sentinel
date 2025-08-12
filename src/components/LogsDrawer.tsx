@@ -1,4 +1,6 @@
 import React from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import { FixedSizeList as List } from 'react-window';
 
 export function LogsDrawer({
   scriptId,
@@ -37,12 +39,7 @@ export function LogsDrawer({
     };
   }, [open, scriptId]);
 
-  React.useEffect(() => {
-    if (!follow) return;
-    const el = containerRef.current;
-    if (!el) return;
-    el.scrollTop = el.scrollHeight;
-  }, [filtered, follow]);
+  // With virtualization, follow is handled by List scrollToItem when data changes
 
   const download = async () => {
     if (!scriptId) return;
@@ -55,6 +52,8 @@ export function LogsDrawer({
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const lines = React.useMemo(() => filtered.split(/\r?\n/), [filtered]);
 
   return (
     <div
@@ -94,8 +93,27 @@ export function LogsDrawer({
             </button>
           </div>
         </div>
-        <div ref={containerRef} className="h-[calc(100%-64px)] overflow-auto p-4 font-mono text-xs leading-relaxed text-slate-200">
-          <pre className="whitespace-pre-wrap break-words">{filtered}</pre>
+        <div ref={containerRef} className="h-[calc(100%-64px)]">
+          <AutoSizer>
+            {({ height, width }) => (
+              <List
+                height={height}
+                width={width}
+                itemCount={lines.length}
+                itemSize={18}
+                overscanCount={50}
+                ref={(list: List | null) => {
+                  if (follow && list) (list as unknown as { scrollToItem: (index: number) => void }).scrollToItem(lines.length - 1);
+                }}
+              >
+                {({ index, style }: { index: number; style: React.CSSProperties }) => (
+                  <div style={style} className="px-4 font-mono text-xs leading-relaxed text-slate-200">
+                    {lines[index]}
+                  </div>
+                )}
+              </List>
+            )}
+          </AutoSizer>
         </div>
       </div>
     </div>

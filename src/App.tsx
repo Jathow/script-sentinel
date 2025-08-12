@@ -233,6 +233,12 @@ export default function App() {
             await window.api.profiles.delete(id);
             setProfiles((prev) => prev.filter((x) => x.id !== id));
           }}
+          onToggleAutostart={async (id, value) => {
+            const p = profiles.find((x) => x.id === id);
+            if (!p) return;
+            const updated = await window.api.profiles.upsert({ ...p, autoStartOnLogin: value });
+            setProfiles((prev) => prev.map((x) => (x.id === id ? updated : x)));
+          }}
         />
         <div className="min-w-0 flex-1">
         <div className="mb-6 grid grid-cols-1 items-center gap-3 md:grid-cols-2 lg:grid-cols-3">

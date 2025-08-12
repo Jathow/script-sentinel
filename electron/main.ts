@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ensureDataFile } from './storage';
+import { ensureDataFile, Storage } from './storage';
 import { registerIpcHandlers, createProcessManager } from './ipc';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -41,7 +41,15 @@ app.whenReady().then(() => {
   nativeTheme.themeSource = 'dark';
   ensureDataFile();
   registerIpcHandlers();
-  createProcessManager();
+  const pm = createProcessManager();
+  // Auto-start profiles marked to launch on login
+  const autostartProfiles = Storage.listProfiles().filter((p) => p.autoStartOnLogin);
+  const uniqueScriptIds = Array.from(
+    new Set(autostartProfiles.flatMap((p) => p.scriptIds)),
+  );
+  for (const sid of uniqueScriptIds) {
+    void pm.start(sid);
+  }
   createWindow();
 
   app.on('activate', () => {

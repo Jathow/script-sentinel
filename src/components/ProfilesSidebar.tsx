@@ -8,6 +8,7 @@ export function ProfilesSidebar({
   onCreate,
   onRename,
   onDelete,
+  onToggleAutostart,
 }: {
   profiles: Profile[];
   activeProfileId: string | 'all';
@@ -15,6 +16,7 @@ export function ProfilesSidebar({
   onCreate: (name: string) => void;
   onRename: (id: string, name: string) => void;
   onDelete: (id: string) => void;
+  onToggleAutostart: (id: string, value: boolean) => void;
 }) {
   const [newName, setNewName] = React.useState('');
   const [editingId, setEditingId] = React.useState<string | null>(null);
@@ -52,7 +54,8 @@ export function ProfilesSidebar({
         </div>
         <ul className="space-y-1">
           {profiles.map((p) => (
-            <li key={p.id} className={`group flex items-center justify-between rounded px-2 py-1 text-sm ${activeProfileId === p.id ? 'bg-white/10' : 'hover:bg-white/10'}`}>
+            <li key={p.id} className={`group rounded px-2 py-1 text-sm ${activeProfileId === p.id ? 'bg-white/10' : 'hover:bg-white/10'}`}>
+              <div className="flex items-center justify-between">
               {editingId === p.id ? (
                 <input
                   className="w-full rounded border border-white/10 bg-black/40 px-1 text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -93,6 +96,16 @@ export function ProfilesSidebar({
                   Delete
                 </button>
               </div>
+              </div>
+              <label className="mt-1 flex items-center justify-between text-xs text-slate-400">
+                <span>Auto-start on login</span>
+                <input
+                  type="checkbox"
+                  checked={!!p.autoStartOnLogin}
+                  onChange={(e) => onToggleAutostart(p.id, e.target.checked)}
+                  className="accent-emerald-500"
+                />
+              </label>
             </li>
           ))}
         </ul>

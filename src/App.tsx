@@ -62,7 +62,7 @@ function Card({
           <input type="checkbox" checked={!!selected} onChange={onToggle} className="accent-emerald-500" />
           <h3 className="text-slate-100">{title}</h3>
         </div>
-        <span className={`h-2 w-2 rounded-full ${statusColor} shadow-[0_0_12px]`} />
+        <span className={`status-led ${statusColor} ${status === 'running' ? 'animate-pulse-glow' : ''}`} />
       </div>
       <div className="mt-3 rounded-lg bg-black/30 ring-1 ring-white/5">
         <div className="grid grid-cols-3 gap-3 px-3 py-2 text-xs text-slate-400">

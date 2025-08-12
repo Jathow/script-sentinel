@@ -14,4 +14,8 @@ body {
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
 }
 
+.status-led {
+  @apply h-2 w-2 rounded-full shadow-[0_0_12px];
+}
+
 

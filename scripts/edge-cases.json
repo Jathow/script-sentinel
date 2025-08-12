@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "settings": { "theme": "dark" },
+  "profiles": [
+    { "id": "ec-prof", "name": "Edge Cases", "scriptIds": ["crash-fast", "flap-crash", "spawn-child", "big-logs", "port-3000"] }
+  ],
+  "scripts": [
+    { "id": "crash-fast", "name": "Crash Fast", "command": "node", "args": ["-e", "process.exit(1)"] },
+    { "id": "flap-crash", "name": "Flap Crash", "command": "node", "args": ["-e", "if(Math.random()<0.7){process.exit(1)}else{setInterval(()=>{},1000)}"], "autoRestart": true, "maxRetries": 5, "backoffMs": 1000 },
+    { "id": "spawn-child", "name": "Spawns Child", "command": "node", "args": ["-e", "require('child_process').spawn(process.execPath,['-e','setInterval(()=>{},1000)']); setInterval(()=>{},1000)"] },
+    { "id": "big-logs", "name": "Big Logs", "command": "node", "args": ["-e", "setInterval(()=>console.log('x'.repeat(200)),100)"] },
+    { "id": "port-3000", "name": "Port 3000 Health", "command": "node", "args": ["-e", "setInterval(()=>{},1000)"] , "healthCheck": { "port": 3000 } }
+  ]
+}

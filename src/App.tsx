@@ -7,6 +7,7 @@ import { ProfileSummary } from './components/ProfileSummary';
 import { SettingsModal } from './components/SettingsModal';
 import { Toasts, useToasts } from './components/Toasts';
 import { ScriptCard } from './components/ScriptCard';
+import { CommandPalette, type CommandItem } from './components/CommandPalette';
 
 type Status = 'running' | 'starting' | 'stopped' | 'crashed' | 'restarting';
 
@@ -121,6 +122,7 @@ export default function App() {
   const [editing, setEditing] = React.useState<ScriptDefinition | null>(null);
   const { toasts, add: addToast, remove: removeToast } = useToasts();
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [cmdOpen, setCmdOpen] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement | null>(null);
   React.useEffect(() => {
     window.api
@@ -229,7 +231,9 @@ export default function App() {
       // Ctrl/Cmd+K: focus search
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        searchInputRef.current?.focus();
+        // If palette is open, close it; otherwise open
+        setCmdOpen((v) => !v);
+        if (!cmdOpen) searchInputRef.current?.blur();
       }
       // Ctrl/Cmd+Enter: start selected
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key === 'Enter') {
@@ -256,7 +260,20 @@ export default function App() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [filtered, startSelected, stopAll]);
+  }, [filtered, startSelected, stopAll, cmdOpen]);
+
+  const commands: CommandItem[] = React.useMemo(() => [
+    { id: 'add-script', title: 'Add Script…', run: openCreate },
+    { id: 'start-selected', title: 'Start Selected', run: () => void startSelected() },
+    { id: 'stop-all', title: 'Stop All', run: () => void stopAll() },
+    ...(profileFilter !== 'all'
+      ? [
+          { id: 'start-profile', title: 'Start Current Profile', run: () => window.api.profiles.startAll(profileFilter) },
+          { id: 'stop-profile', title: 'Stop Current Profile', run: () => window.api.profiles.stopAll(profileFilter) },
+        ]
+      : []),
+    { id: 'open-settings', title: 'Open Settings', run: () => setSettingsOpen(true) },
+  ], [profileFilter, startSelected, stopAll]);
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b0f14] to-[#0a0e13] text-slate-200">
       <header className="sticky top-0 z-10 border-b border-white/10 bg-black/30 backdrop-blur" role="banner">
@@ -399,6 +416,7 @@ export default function App() {
         profiles={profiles}
       />
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} commands={commands} />
       <Toasts toasts={toasts} onClose={removeToast} />
     </div>
   );

@@ -45,6 +45,7 @@ export function sanitizeSettingsPatch(patch: unknown): Partial<AppSettings> {
   if (typeof patch.updateChannel === 'string' && (patch.updateChannel === 'stable' || patch.updateChannel === 'beta')) out.updateChannel = patch.updateChannel;
   if (typeof patch.logsPath === 'string') out.logsPath = patch.logsPath;
   if (typeof patch.crashReportingEnabled === 'boolean') out.crashReportingEnabled = patch.crashReportingEnabled;
+  if (typeof (patch as Record<string, unknown>).telemetryEnabled === 'boolean') out.telemetryEnabled = (patch as { telemetryEnabled: boolean }).telemetryEnabled;
   return out;
 }
 

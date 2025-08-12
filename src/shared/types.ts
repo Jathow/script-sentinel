@@ -62,6 +62,7 @@ export interface AppSettings {
   updateChannel?: 'stable' | 'beta';
   logsPath?: string;
   crashReportingEnabled?: boolean;
+  telemetryEnabled?: boolean;
 }
 
 export interface PersistedData {

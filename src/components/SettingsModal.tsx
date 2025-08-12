@@ -123,6 +123,15 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
                 />
                 <span className="text-slate-300">Enable basic crash reporting</span>
               </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={!!settings?.telemetryEnabled}
+                  onChange={(e) => update({ telemetryEnabled: e.target.checked })}
+                  className="accent-emerald-500"
+                />
+                <span className="text-slate-300">Enable anonymous telemetry (local-only by default)</span>
+              </label>
             </div>
           )}
           {active === 'updates' && (

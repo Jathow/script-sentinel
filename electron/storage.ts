@@ -28,7 +28,7 @@ const DEFAULT_DATA: PersistedData = {
     },
   ],
   profiles: [],
-  settings: { theme: 'dark', notifications: true, startMinimized: false, updateChannel: 'stable' },
+  settings: { theme: 'dark', notifications: true, startMinimized: false, updateChannel: 'stable', telemetryEnabled: false },
 };
 
 export function ensureDataFile(): void {

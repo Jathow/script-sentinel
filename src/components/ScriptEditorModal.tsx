@@ -111,6 +111,32 @@ export function ScriptEditorModal({
     onClose();
   };
 
+  const [testing, setTesting] = React.useState(false);
+  const [testResult, setTestResult] = React.useState<{
+    exitCode: number | null;
+    stdout: string;
+    stderr: string;
+    timedOut: boolean;
+    error?: string;
+  } | null>(null);
+
+  const runTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await window.api.process.testRun({
+        command: command.trim(),
+        args: parseArgs(args),
+        cwd: cwd.trim() || undefined,
+        env: parseEnv(envText),
+        timeoutMs: 8000,
+      });
+      setTestResult(result);
+    } finally {
+      setTesting(false);
+    }
+  };
+
   return (
     <div className={`fixed inset-0 z-40 ${open ? '' : 'pointer-events-none'}`} role="dialog" aria-modal="true" aria-label={initial ? 'Edit script' : 'Add script'}>
       <div
@@ -141,6 +167,15 @@ export function ScriptEditorModal({
                 className="rounded-md bg-emerald-500/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500"
               >
                 Save
+              </button>
+              <button
+                type="button"
+                onClick={runTest}
+                disabled={testing || !command.trim()}
+                className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 disabled:opacity-50"
+                aria-busy={testing}
+              >
+                {testing ? 'Testing…' : 'Test Run'}
               </button>
             </div>
           </div>
@@ -200,6 +235,24 @@ export function ScriptEditorModal({
                   ))}
                 </select>
               </label>
+              {testResult && (
+                <div className="rounded-md border border-white/10 bg-black/30 p-3 text-xs text-slate-300">
+                  <div className="mb-1 font-semibold">Test Result</div>
+                  <div className="mb-1">Exit: {testResult.exitCode ?? '—'} {testResult.timedOut ? '(timed out)' : ''} {testResult.error ? `(error: ${testResult.error})` : ''}</div>
+                  {testResult.stdout && (
+                    <div className="mb-1 whitespace-pre-wrap">
+                      <div className="text-slate-400">stdout:</div>
+                      <div className="text-slate-200">{testResult.stdout}</div>
+                    </div>
+                  )}
+                  {testResult.stderr && (
+                    <div className="whitespace-pre-wrap">
+                      <div className="text-slate-400">stderr:</div>
+                      <div className="text-slate-200">{testResult.stderr}</div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="space-y-3">
               <div className="flex gap-4">

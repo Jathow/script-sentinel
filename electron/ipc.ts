@@ -3,6 +3,7 @@ import { Storage } from './storage';
 import type { PersistedData } from '../src/shared/types';
 import { ProcessManager } from './processManager';
 import { PidUsageSampler } from './metrics';
+import { testRun } from './testRun';
 import fs from 'node:fs';
 import path from 'node:path';
 import { app } from 'electron';
@@ -51,6 +52,9 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('process:snapshot', (_e, id: string) => pm?.snapshot(id));
   ipcMain.handle('process:snapshots', () => pm?.listSnapshots());
   ipcMain.handle('process:killTree', async (_e, id: string) => pm?.killTree(id));
+  ipcMain.handle('process:testRun', async (_e, payload: { command: string; args?: string[]; cwd?: string; env?: Record<string, string>; timeoutMs?: number }) => {
+    return testRun(payload);
+  });
 
   // Logs
   ipcMain.handle('process:readLog', async (_e, scriptId: string) => {

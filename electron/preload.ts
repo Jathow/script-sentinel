@@ -40,6 +40,14 @@ contextBridge.exposeInMainWorld('api', {
     snapshots: () =>
       ipcRenderer.invoke('process:snapshots') as Promise<RuntimeStateSnapshot[] | undefined>,
     killTree: (id: string) => ipcRenderer.invoke('process:killTree', id) as Promise<void>,
+    testRun: (payload: { command: string; args?: string[]; cwd?: string; env?: Record<string, string>; timeoutMs?: number }) =>
+      ipcRenderer.invoke('process:testRun', payload) as Promise<{
+        exitCode: number | null;
+        stdout: string;
+        stderr: string;
+        timedOut: boolean;
+        error?: string;
+      }>,
     onStatus: (cb: (snap: RuntimeStateSnapshot) => void) => {
       const handler = (_: unknown, snap: RuntimeStateSnapshot) => cb(snap);
       ipcRenderer.on('process:status:event', handler);
@@ -113,6 +121,7 @@ declare global {
         snapshot: (id: string) => Promise<RuntimeStateSnapshot | undefined>;
         snapshots: () => Promise<RuntimeStateSnapshot[] | undefined>;
         killTree: (id: string) => Promise<void>;
+        testRun: (payload: { command: string; args?: string[]; cwd?: string; env?: Record<string, string>; timeoutMs?: number }) => Promise<{ exitCode: number | null; stdout: string; stderr: string; timedOut: boolean; error?: string }>;
         onStatus: (cb: (snap: RuntimeStateSnapshot) => void) => () => void;
         onLog: (cb: (evt: { scriptId: string; text: string }) => void) => () => void;
         onRestart: (cb: (evt: { scriptId: string; attempt: number }) => void) => () => void;

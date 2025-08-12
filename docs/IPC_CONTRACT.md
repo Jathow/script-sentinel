@@ -42,6 +42,7 @@ Conventions
 - process:readLog (id: string) → Promise<string>
 - process:listLogs (id: string) → Promise<{ file: string; size: number; mtimeMs: number }[]>
 - process:readLogFile ({ scriptId: string; file: string }) → Promise<string>
+- process:testRun ({ command, args?, cwd?, env?, timeoutMs? }) → Promise<{ exitCode: number | null; stdout: string; stderr: string; timedOut: boolean; error?: string }>
 
 Events:
 - process:status:event (payload: RuntimeStateSnapshot)

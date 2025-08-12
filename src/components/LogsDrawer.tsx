@@ -15,6 +15,8 @@ export function LogsDrawer({
 }) {
   const [logs, setLogs] = React.useState<string>('');
   const [follow, setFollow] = React.useState(true);
+  const [paused, setPaused] = React.useState(false);
+  const [buffer, setBuffer] = React.useState<string>('');
   const [query, setQuery] = React.useState('');
   const containerRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -30,14 +32,17 @@ export function LogsDrawer({
     if (!open || !scriptId) return;
     window.api.process.readLog(scriptId).then((txt) => setLogs(txt ?? ''));
     const off = window.api.process.onLog((evt) => {
-      if (evt.scriptId === scriptId) {
+      if (evt.scriptId !== scriptId) return;
+      if (paused) {
+        setBuffer((prev) => prev + evt.text);
+      } else {
         setLogs((prev) => prev + evt.text);
       }
     });
     return () => {
       off?.();
     };
-  }, [open, scriptId]);
+  }, [open, scriptId, paused]);
 
   // With virtualization, follow is handled by List scrollToItem when data changes
 
@@ -83,10 +88,24 @@ export function LogsDrawer({
               className="rounded-md border border-white/10 bg-black/40 px-2 py-1 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
             <button
-              onClick={() => setFollow((f) => !f)}
+              onClick={() => {
+                if (paused) {
+                  // flush buffer on resume
+                  setLogs((prev) => prev + buffer);
+                  setBuffer('');
+                }
+                setPaused((p) => !p);
+              }}
               className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
             >
-              {follow ? 'Pause' : 'Follow'}
+              {paused ? 'Resume' : 'Pause'}
+            </button>
+            <button
+              onClick={() => setFollow((f) => !f)}
+              className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
+              title="Auto-scroll to tail"
+            >
+              {follow ? 'Unfollow' : 'Follow'}
             </button>
             <button onClick={download} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">
               Download

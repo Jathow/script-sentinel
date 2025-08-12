@@ -1,4 +1,5 @@
 import React from 'react';
+import { LogsDrawer } from './components/LogsDrawer';
 
 type Status = 'running' | 'starting' | 'stopped' | 'crashed' | 'restarting';
 
@@ -7,6 +8,7 @@ function Card({
   status,
   onStart,
   onStop,
+  onLogs,
   cpu,
   mem,
   uptime,
@@ -17,6 +19,7 @@ function Card({
   status: Status;
   onStart?: () => void;
   onStop?: () => void;
+  onLogs?: () => void;
   cpu?: number;
   mem?: number;
   uptime?: number;
@@ -67,7 +70,7 @@ function Card({
       <div className="mt-4 flex gap-2">
         <button onClick={onStart} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Start</button>
         <button onClick={onStop} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Stop</button>
-        <button className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Logs</button>
+        <button onClick={onLogs} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Logs</button>
       </div>
     </div>
   );
@@ -78,6 +81,8 @@ export default function App() {
   const [scripts, setScripts] = React.useState<Array<{ id: string; name: string }>>([]);
   const [statuses, setStatuses] = React.useState<Record<string, { status: Status; cpu?: number; mem?: number; uptime?: number }>>({});
   const [selected, setSelected] = React.useState<Record<string, boolean>>({});
+  const [logsOpen, setLogsOpen] = React.useState(false);
+  const [activeLog, setActiveLog] = React.useState<{ id: string; name: string } | null>(null);
   React.useEffect(() => {
     window.api
       .ping()
@@ -121,6 +126,11 @@ export default function App() {
   const toggleSelect = (id: string) => setSelected((p) => ({ ...p, [id]: !p[id] }));
   const startOne = (id: string) => window.api.process.start(id);
   const stopOne = (id: string) => window.api.process.stop(id);
+  const openLogs = (id: string) => {
+    const s = scripts.find((x) => x.id === id);
+    setActiveLog(s ? { id: s.id, name: s.name } : { id, name: id });
+    setLogsOpen(true);
+  };
   const startSelected = () => Promise.all(Object.entries(selected).filter(([, v]) => v).map(([id]) => window.api.process.start(id)));
   const stopAll = () => Promise.all(scripts.map((s) => window.api.process.stop(s.id)));
   return (
@@ -160,11 +170,18 @@ export default function App() {
                 onStop={() => stopOne(s.id)}
                 selected={!!selected[s.id]}
                 onToggle={() => toggleSelect(s.id)}
+                onLogs={() => openLogs(s.id)}
               />
             ))
           )}
         </div>
       </main>
+      <LogsDrawer
+        scriptId={activeLog?.id ?? null}
+        scriptName={activeLog?.name ?? null}
+        open={logsOpen}
+        onClose={() => setLogsOpen(false)}
+      />
     </div>
   );
 }

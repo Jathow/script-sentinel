@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.on('process:log:event', handler);
       return () => ipcRenderer.off('process:log:event', handler);
     },
+    readLog: (id: string) => ipcRenderer.invoke('process:readLog', id) as Promise<string>,
   },
 });
 
@@ -69,6 +70,7 @@ declare global {
         snapshots: () => Promise<RuntimeStateSnapshot[] | undefined>;
         onStatus: (cb: (snap: RuntimeStateSnapshot) => void) => () => void;
         onLog: (cb: (evt: { scriptId: string; text: string }) => void) => () => void;
+        readLog: (id: string) => Promise<string>;
       };
     };
   }

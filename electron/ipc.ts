@@ -1,6 +1,9 @@
 import { ipcMain } from 'electron';
 import { Storage } from './storage';
 import { ProcessManager } from './processManager';
+import fs from 'node:fs';
+import path from 'node:path';
+import { app } from 'electron';
 import type { ScriptDefinition, Profile, AppSettings } from '../src/shared/types';
 
 let pm: ProcessManager | null = null;
@@ -29,6 +32,16 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('process:restart', async (_e, id: string) => pm?.restart(id));
   ipcMain.handle('process:snapshot', (_e, id: string) => pm?.snapshot(id));
   ipcMain.handle('process:snapshots', () => pm?.listSnapshots());
+
+  // Logs
+  ipcMain.handle('process:readLog', async (_e, scriptId: string) => {
+    const logPath = path.join(app.getPath('userData'), 'logs', `${scriptId}.log`);
+    try {
+      return fs.existsSync(logPath) ? fs.readFileSync(logPath, 'utf-8') : '';
+    } catch {
+      return '';
+    }
+  });
 }
 
 export function createProcessManager(): ProcessManager {

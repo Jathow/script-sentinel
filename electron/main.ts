@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ensureDataFile } from './storage';
-import { registerIpcHandlers } from './ipc';
+import { registerIpcHandlers, createProcessManager } from './ipc';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -41,6 +41,7 @@ app.whenReady().then(() => {
   nativeTheme.themeSource = 'dark';
   ensureDataFile();
   registerIpcHandlers();
+  createProcessManager();
   createWindow();
 
   app.on('activate', () => {

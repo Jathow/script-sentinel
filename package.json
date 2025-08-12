@@ -15,11 +15,12 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
+    "@types/pidusage": "^2.0.5",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.2.1",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
+    "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
@@ -37,12 +38,12 @@
   },
   "dependencies": {
     "electron": "^31.0.2",
+    "pidusage": "^3.0.2",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "tree-kill": "^1.2.2"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,css,md}": "prettier --write"
   }
 }
-
-

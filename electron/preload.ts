@@ -21,6 +21,23 @@ contextBridge.exposeInMainWorld('api', {
     update: (patch: Partial<AppSettings>) =>
       ipcRenderer.invoke('settings:update', patch) as Promise<AppSettings>,
   },
+  process: {
+    start: (id: string) => ipcRenderer.invoke('process:start', id) as Promise<void>,
+    stop: (id: string) => ipcRenderer.invoke('process:stop', id) as Promise<void>,
+    restart: (id: string) => ipcRenderer.invoke('process:restart', id) as Promise<void>,
+    snapshot: (id: string) => ipcRenderer.invoke('process:snapshot', id),
+    snapshots: () => ipcRenderer.invoke('process:snapshots'),
+    onStatus: (cb: (snap: unknown) => void) => {
+      const handler = (_: unknown, snap: unknown) => cb(snap);
+      ipcRenderer.on('process:status:event', handler);
+      return () => ipcRenderer.off('process:status:event', handler);
+    },
+    onLog: (cb: (evt: { scriptId: string; text: string }) => void) => {
+      const handler = (_: unknown, evt: { scriptId: string; text: string }) => cb(evt);
+      ipcRenderer.on('process:log:event', handler);
+      return () => ipcRenderer.off('process:log:event', handler);
+    },
+  },
 });
 
 declare global {
@@ -41,6 +58,15 @@ declare global {
       settings: {
         get: () => Promise<AppSettings>;
         update: (patch: Partial<AppSettings>) => Promise<AppSettings>;
+      };
+      process: {
+        start: (id: string) => Promise<void>;
+        stop: (id: string) => Promise<void>;
+        restart: (id: string) => Promise<void>;
+        snapshot: (id: string) => Promise<unknown>;
+        snapshots: () => Promise<unknown>;
+        onStatus: (cb: (snap: unknown) => void) => () => void;
+        onLog: (cb: (evt: { scriptId: string; text: string }) => void) => () => void;
       };
     };
   }

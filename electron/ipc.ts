@@ -1,6 +1,9 @@
 import { ipcMain } from 'electron';
 import { Storage } from './storage';
+import { ProcessManager } from './processManager';
 import type { ScriptDefinition, Profile, AppSettings } from '../src/shared/types';
+
+let pm: ProcessManager | null = null;
 
 export function registerIpcHandlers(): void {
   // Scripts
@@ -19,6 +22,19 @@ export function registerIpcHandlers(): void {
   // Settings
   ipcMain.handle('settings:get', () => Storage.getSettings());
   ipcMain.handle('settings:update', (_e, patch: Partial<AppSettings>) => Storage.updateSettings(patch));
+
+  // Process control
+  ipcMain.handle('process:start', async (_e, id: string) => pm?.start(id));
+  ipcMain.handle('process:stop', async (_e, id: string) => pm?.stop(id));
+  ipcMain.handle('process:restart', async (_e, id: string) => pm?.restart(id));
+  ipcMain.handle('process:snapshot', (_e, id: string) => pm?.snapshot(id));
+  ipcMain.handle('process:snapshots', () => pm?.listSnapshots());
+}
+
+export function createProcessManager(): ProcessManager {
+  pm = new ProcessManager(() => Storage.listScripts());
+  pm.init();
+  return pm;
 }
 
 

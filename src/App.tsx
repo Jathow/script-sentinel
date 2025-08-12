@@ -273,8 +273,25 @@ export default function App() {
             <button onClick={openCreate} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Add Script</button>
             <button onClick={startSelected} className="rounded-md bg-emerald-500/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500">Start Selected</button>
             <button onClick={stopAll} className="rounded-md bg-rose-500/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-500">Stop All</button>
+            {profileFilter !== 'all' && (
+              <>
+                <button onClick={() => window.api.profiles.startAll(profileFilter)} className="rounded-md bg-emerald-600/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-600">Start Profile</button>
+                <button onClick={() => window.api.profiles.stopAll(profileFilter)} className="rounded-md bg-rose-600/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-600">Stop Profile</button>
+              </>
+            )}
           </div>
         </div>
+        {profileFilter !== 'all' && (
+          <div className="mb-4 text-xs text-slate-400">
+            {(() => {
+              const prof = profiles.find((p) => p.id === profileFilter);
+              const ids = prof?.scriptIds ?? [];
+              const running = ids.filter((id) => (statuses[id]?.status ?? 'stopped') === 'running')
+                .length;
+              return `Profile ${prof?.name ?? ''}: ${running}/${ids.length} running`;
+            })()}
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {scripts.length === 0 ? (
             <div className="rounded-lg border border-white/10 bg-black/20 p-6 text-slate-400">

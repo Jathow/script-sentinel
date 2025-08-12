@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld('api', {
     list: () => ipcRenderer.invoke('profiles:list') as Promise<Profile[]>,
     upsert: (profile: Profile) => ipcRenderer.invoke('profiles:upsert', profile) as Promise<Profile>,
     delete: (id: string) => ipcRenderer.invoke('profiles:delete', id) as Promise<void>,
+    startAll: (id: string) => ipcRenderer.invoke('profiles:startAll', id) as Promise<void>,
+    stopAll: (id: string) => ipcRenderer.invoke('profiles:stopAll', id) as Promise<void>,
   },
   settings: {
     get: () => ipcRenderer.invoke('settings:get') as Promise<AppSettings>,
@@ -58,6 +60,8 @@ declare global {
         list: () => Promise<Profile[]>;
         upsert: (profile: Profile) => Promise<Profile>;
         delete: (id: string) => Promise<void>;
+        startAll: (id: string) => Promise<void>;
+        stopAll: (id: string) => Promise<void>;
       };
       settings: {
         get: () => Promise<AppSettings>;

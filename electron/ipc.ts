@@ -21,6 +21,16 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('profiles:list', () => Storage.listProfiles());
   ipcMain.handle('profiles:upsert', (_e, profile: Profile) => Storage.upsertProfile(profile));
   ipcMain.handle('profiles:delete', (_e, id: string) => Storage.deleteProfile(id));
+  ipcMain.handle('profiles:startAll', async (_e, id: string) => {
+    const profile = Storage.listProfiles().find((p) => p.id === id);
+    const scripts = profile?.scriptIds ?? [];
+    await Promise.all(scripts.map((sid) => pm?.start(sid)));
+  });
+  ipcMain.handle('profiles:stopAll', async (_e, id: string) => {
+    const profile = Storage.listProfiles().find((p) => p.id === id);
+    const scripts = profile?.scriptIds ?? [];
+    await Promise.all(scripts.map((sid) => pm?.stop(sid)));
+  });
 
   // Settings
   ipcMain.handle('settings:get', () => Storage.getSettings());

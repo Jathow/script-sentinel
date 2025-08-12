@@ -106,6 +106,16 @@ export class ProcessManager {
     }
   }
 
+  private processExists(pid: number): boolean {
+    try {
+      // signal 0 does not actually send a signal, but will throw if the process does not exist
+      process.kill(pid, 0);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   private writeLog(scriptId: string, text: string): void {
     const managed = this.processes.get(scriptId);
     if (!managed) return;
@@ -299,7 +309,7 @@ export class ProcessManager {
       // Force kill after timeout if still running
       const killer = setTimeout(() => {
         const still = this.processes.get(id)?.child?.pid;
-        if (still) {
+        if (still && this.processExists(still)) {
           try { treeKill(still, 'SIGKILL', () => onResolve()); } catch { onResolve(); }
         } else {
           onResolve();
@@ -307,7 +317,8 @@ export class ProcessManager {
       }, Math.max(100, timeoutMs));
       // Also resolve when process exits normally
       const checkExit = setInterval(() => {
-        if (!this.processes.get(id)?.child?.pid) {
+        const still = this.processes.get(id)?.child?.pid;
+        if (!still || !this.processExists(still)) {
           clearInterval(checkExit);
           clearTimeout(killer);
           onResolve();
@@ -325,9 +336,16 @@ export class ProcessManager {
   async killTree(id: string): Promise<void> {
     const p = this.processes.get(id);
     if (!p?.child?.pid) return;
+    const pid = p.child!.pid!;
     await new Promise<void>((resolve) => {
-      treeKill(p.child!.pid!, 'SIGKILL', () => resolve());
+      treeKill(pid, 'SIGKILL', () => resolve());
     });
+    // Verify no orphan remains
+    const start = Date.now();
+    while (Date.now() - start < 2000) {
+      if (!this.processExists(pid)) break;
+      await delay(50);
+    }
   }
 
   private async checkHealth(h: NonNullable<ScriptDefinition['healthCheck']>): Promise<boolean> {

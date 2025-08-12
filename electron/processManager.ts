@@ -21,6 +21,7 @@ interface ManagedProc {
   stopping?: boolean;
   logStream?: fs.WriteStream;
   healthy?: boolean;
+  nextRestartAt?: number;
 }
 
 export class ProcessManager {
@@ -119,6 +120,8 @@ export class ProcessManager {
       lastExitCode: p.lastExitCode ?? null,
       retries: p.retries,
       healthy: p.healthy,
+      backoffMs: p.backoffMs,
+      nextRestartDelayMs: p.nextRestartAt ? Math.max(0, p.nextRestartAt - Date.now()) : undefined,
     };
   }
 
@@ -181,10 +184,13 @@ export class ProcessManager {
           const maxRetries = script.maxRetries ?? 5;
           if (maxRetries === -1 || p!.retries < maxRetries) {
             const waitMs = Math.min(30000, p!.backoffMs * Math.max(1, p!.retries + 1));
+            p!.nextRestartAt = Date.now() + waitMs;
+            this.emitStatus(id);
             await delay(waitMs);
             p!.retries += 1;
             this.broadcast('process:restart:event', { scriptId: id, attempt: p!.retries });
             await this.start(id);
+            p!.nextRestartAt = undefined;
           }
         } else {
           p!.retries = 0;
@@ -217,6 +223,14 @@ export class ProcessManager {
   async restart(id: string): Promise<void> {
     await this.stop(id);
     await this.start(id);
+  }
+
+  async killTree(id: string): Promise<void> {
+    const p = this.processes.get(id);
+    if (!p?.child?.pid) return;
+    await new Promise<void>((resolve) => {
+      treeKill(p.child!.pid!, 'SIGKILL', () => resolve());
+    });
   }
 
   private async checkHealth(h: NonNullable<ScriptDefinition['healthCheck']>): Promise<boolean> {

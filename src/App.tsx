@@ -10,6 +10,10 @@ function Card({
   onStart,
   onStop,
   onLogs,
+  onKill,
+  retries,
+  lastExitCode,
+  nextRestartDelayMs,
   cpu,
   mem,
   uptime,
@@ -21,6 +25,10 @@ function Card({
   onStart?: () => void;
   onStop?: () => void;
   onLogs?: () => void;
+  onKill?: () => void;
+  retries?: number;
+  lastExitCode?: number | null;
+  nextRestartDelayMs?: number;
   cpu?: number;
   mem?: number;
   uptime?: number;
@@ -67,11 +75,26 @@ function Card({
             <div>{formatUptime(uptime)}</div>
           </div>
         </div>
+        <div className="grid grid-cols-3 gap-3 px-3 pb-3 text-xs text-slate-400">
+          <div>
+            <div className="text-slate-300">Retries</div>
+            <div>{retries ?? 0}</div>
+          </div>
+          <div>
+            <div className="text-slate-300">Last Exit</div>
+            <div>{lastExitCode ?? '—'}</div>
+          </div>
+          <div>
+            <div className="text-slate-300">Next Restart</div>
+            <div>{nextRestartDelayMs ? Math.ceil(nextRestartDelayMs / 1000) + 's' : '—'}</div>
+          </div>
+        </div>
       </div>
       <div className="mt-4 flex gap-2">
         <button onClick={onStart} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Start</button>
         <button onClick={onStop} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Stop</button>
         <button onClick={onLogs} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Logs</button>
+        <button onClick={onKill} title="Kill process tree" className="rounded-md bg-rose-600/80 px-3 py-1.5 text-sm text-white hover:bg-rose-600">Kill</button>
       </div>
     </div>
   );
@@ -80,7 +103,7 @@ function Card({
 export default function App() {
   const [pong, setPong] = React.useState<string>('');
   const [scripts, setScripts] = React.useState<ScriptDefinition[]>([]);
-  const [statuses, setStatuses] = React.useState<Record<string, { status: Status; cpu?: number; mem?: number; uptime?: number; healthy?: boolean }>>({});
+  const [statuses, setStatuses] = React.useState<Record<string, { status: Status; cpu?: number; mem?: number; uptime?: number; healthy?: boolean; retries?: number; lastExitCode?: number | null; backoffMs?: number; nextRestartDelayMs?: number }>>({});
   const [selected, setSelected] = React.useState<Record<string, boolean>>({});
   const [logsOpen, setLogsOpen] = React.useState(false);
   const [activeLog, setActiveLog] = React.useState<{ id: string; name: string } | null>(null);
@@ -124,6 +147,10 @@ export default function App() {
           mem: snap.memMB,
           uptime: snap.uptimeMs,
           healthy: (snap as { healthy?: boolean }).healthy,
+          retries: snap.retries,
+          lastExitCode: snap.lastExitCode ?? null,
+          backoffMs: (snap as { backoffMs?: number }).backoffMs,
+          nextRestartDelayMs: (snap as { nextRestartDelayMs?: number }).nextRestartDelayMs,
         },
       }));
     });
@@ -135,6 +162,7 @@ export default function App() {
   const toggleSelect = (id: string) => setSelected((p) => ({ ...p, [id]: !p[id] }));
   const startOne = (id: string) => window.api.process.start(id);
   const stopOne = (id: string) => window.api.process.stop(id);
+  const killOne = (id: string) => window.api.process.killTree(id);
   const openLogs = (id: string) => {
     const s = scripts.find((x) => x.id === id);
     setActiveLog(s ? { id: s.id, name: s.name } : { id, name: id });
@@ -218,8 +246,12 @@ export default function App() {
                 cpu={statuses[s.id]?.cpu}
                 mem={statuses[s.id]?.mem}
                 uptime={statuses[s.id]?.uptime}
+                retries={statuses[s.id]?.retries}
+                lastExitCode={statuses[s.id]?.lastExitCode}
+                nextRestartDelayMs={statuses[s.id]?.nextRestartDelayMs}
                 onStart={() => startOne(s.id)}
                 onStop={() => stopOne(s.id)}
+                onKill={() => killOne(s.id)}
                 selected={!!selected[s.id]}
                 onToggle={() => toggleSelect(s.id)}
                 onLogs={() => openLogs(s.id)}

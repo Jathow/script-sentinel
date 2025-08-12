@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('process:snapshot', id) as Promise<RuntimeStateSnapshot | undefined>,
     snapshots: () =>
       ipcRenderer.invoke('process:snapshots') as Promise<RuntimeStateSnapshot[] | undefined>,
+    killTree: (id: string) => ipcRenderer.invoke('process:killTree', id) as Promise<void>,
     onStatus: (cb: (snap: RuntimeStateSnapshot) => void) => {
       const handler = (_: unknown, snap: RuntimeStateSnapshot) => cb(snap);
       ipcRenderer.on('process:status:event', handler);
@@ -68,6 +69,7 @@ declare global {
         restart: (id: string) => Promise<void>;
         snapshot: (id: string) => Promise<RuntimeStateSnapshot | undefined>;
         snapshots: () => Promise<RuntimeStateSnapshot[] | undefined>;
+        killTree: (id: string) => Promise<void>;
         onStatus: (cb: (snap: RuntimeStateSnapshot) => void) => () => void;
         onLog: (cb: (evt: { scriptId: string; text: string }) => void) => () => void;
         readLog: (id: string) => Promise<string>;

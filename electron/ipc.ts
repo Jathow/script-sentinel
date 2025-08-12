@@ -32,6 +32,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('process:restart', async (_e, id: string) => pm?.restart(id));
   ipcMain.handle('process:snapshot', (_e, id: string) => pm?.snapshot(id));
   ipcMain.handle('process:snapshots', () => pm?.listSnapshots());
+  ipcMain.handle('process:killTree', async (_e, id: string) => pm?.killTree(id));
 
   // Logs
   ipcMain.handle('process:readLog', async (_e, scriptId: string) => {

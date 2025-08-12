@@ -42,6 +42,8 @@ export interface RuntimeStateSnapshot {
   lastExitCode?: number | null;
   retries?: number;
   healthy?: boolean;
+  backoffMs?: number;
+  nextRestartDelayMs?: number;
 }
 
 export interface Profile {

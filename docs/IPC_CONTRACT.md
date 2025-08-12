@@ -68,6 +68,8 @@ Additional event:
 Events:
 - updates:event
   - { type: 'available' | 'none' | 'progress' | 'downloaded' | 'error'; info?: unknown; message?: string }
+- app:crash (payload: { kind: 'uncaughtException' | 'unhandledRejection'; message: string })
+  - Emitted when the main process records an unhandled error
 
 ## Types (summary)
 - ScriptDefinition

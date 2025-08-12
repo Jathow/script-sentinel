@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { ensureDataFile, Storage } from './storage';
 import { registerIpcHandlers, createProcessManager } from './ipc';
 import { logger } from './appLogger';
+import { writeCrashDump } from './crash';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -112,9 +113,10 @@ app.whenReady().then(() => {
   // Basic crash reporting toggle could be wired to Sentry or similar; here we log unhandled errors
   if (Storage.getSettings().crashReportingEnabled) {
     process.on('uncaughtException', (err) => {
-      for (const win of BrowserWindow.getAllWindows()) {
-        win.webContents.send('log:event', { level: 'error', message: `Uncaught: ${err.message}` });
-      }
+      writeCrashDump('uncaughtException', err);
+    });
+    process.on('unhandledRejection', (reason) => {
+      writeCrashDump('unhandledRejection', reason);
     });
   }
   autoUpdater.on('update-available', () => {

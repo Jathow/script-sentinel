@@ -14,10 +14,12 @@
     "typecheck": "tsc --noEmit",
     "prepare": "husky install",
     "release": "standard-version",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:unit": "vitest run"
   },
   "devDependencies": {
     "@playwright/test": "^1.45.0",
+    "vitest": "^1.6.0",
     "@types/node": "^20.11.30",
     "@types/pidusage": "^2.0.5",
     "@types/react": "^18.3.3",

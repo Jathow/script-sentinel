@@ -1,6 +1,7 @@
 import React from 'react';
 import { LogsDrawer } from './components/LogsDrawer';
 import type { ScriptDefinition, Profile } from './shared/types';
+import { ScriptEditorModal } from './components/ScriptEditorModal';
 
 type Status = 'running' | 'starting' | 'stopped' | 'crashed' | 'restarting';
 
@@ -111,6 +112,8 @@ export default function App() {
   const [query, setQuery] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<Status | 'all'>('all');
   const [profileFilter, setProfileFilter] = React.useState<string>('all');
+  const [editorOpen, setEditorOpen] = React.useState(false);
+  const [editing, setEditing] = React.useState<ScriptDefinition | null>(null);
   React.useEffect(() => {
     window.api
       .ping()
@@ -170,6 +173,24 @@ export default function App() {
   };
   const startSelected = () => Promise.all(Object.entries(selected).filter(([, v]) => v).map(([id]) => window.api.process.start(id)));
   const stopAll = () => Promise.all(scripts.map((s) => window.api.process.stop(s.id)));
+  const openCreate = () => {
+    setEditing(null);
+    setEditorOpen(true);
+  };
+  // const openEdit = (id: string) => {
+  //   const s = scripts.find((x) => x.id === id) ?? null;
+  //   setEditing(s);
+  //   setEditorOpen(true);
+  // };
+  const onSaved = (saved: ScriptDefinition) => {
+    setScripts((prev) => {
+      const idx = prev.findIndex((p) => p.id === saved.id);
+      if (idx === -1) return [...prev, saved];
+      const next = prev.slice();
+      next[idx] = saved;
+      return next;
+    });
+  };
 
   const filtered = React.useMemo(() => {
     return scripts.filter((s) => {
@@ -228,6 +249,7 @@ export default function App() {
             </select>
           </div>
           <div className="flex justify-end gap-2">
+            <button onClick={openCreate} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Add Script</button>
             <button onClick={startSelected} className="rounded-md bg-emerald-500/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500">Start Selected</button>
             <button onClick={stopAll} className="rounded-md bg-rose-500/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-500">Stop All</button>
           </div>
@@ -265,6 +287,13 @@ export default function App() {
         scriptName={activeLog?.name ?? null}
         open={logsOpen}
         onClose={() => setLogsOpen(false)}
+      />
+      <ScriptEditorModal
+        open={editorOpen}
+        onClose={() => setEditorOpen(false)}
+        initial={editing}
+        onSaved={onSaved}
+        profiles={profiles}
       />
     </div>
   );

@@ -80,11 +80,10 @@ export class ProcessManager {
     this.metricsTimer = setInterval(() => this.sampleMetrics().catch(() => {}), 2000);
   }
 
-  dispose(): void {
+  async dispose(graceTimeoutMs = 5000): Promise<void> {
     if (this.metricsTimer) clearInterval(this.metricsTimer);
-    for (const [id] of this.processes) {
-      void this.stop(id);
-    }
+    const ids = Array.from(this.processes.keys());
+    await Promise.all(ids.map((id) => this.stop(id, graceTimeoutMs)));
   }
 
   private getLogPath(scriptId: string): string {
@@ -267,7 +266,7 @@ export class ProcessManager {
     spawnOnce();
   }
 
-  async stop(id: string): Promise<void> {
+  async stop(id: string, timeoutMs = 5000): Promise<void> {
     const p = this.processes.get(id);
     if (!p?.child?.pid) {
       // set status to stopped
@@ -282,10 +281,38 @@ export class ProcessManager {
     const pending = (p as unknown as { backoffAbort?: AbortController }).backoffAbort;
     if (pending) pending.abort();
     return new Promise((resolve) => {
-      treeKill(p.child!.pid!, 'SIGTERM', () => {
-        // The 'exit' handler will adjust state
+      const pid = p.child!.pid!;
+      let resolved = false;
+      const onResolve = () => {
+        if (resolved) return;
+        resolved = true;
         resolve();
-      });
+      };
+      // Send SIGTERM first
+      try {
+        treeKill(pid, 'SIGTERM', () => {
+          // will resolve via 'exit' handler; keep timeout safety
+        });
+      } catch {
+        // ignore
+      }
+      // Force kill after timeout if still running
+      const killer = setTimeout(() => {
+        const still = this.processes.get(id)?.child?.pid;
+        if (still) {
+          try { treeKill(still, 'SIGKILL', () => onResolve()); } catch { onResolve(); }
+        } else {
+          onResolve();
+        }
+      }, Math.max(100, timeoutMs));
+      // Also resolve when process exits normally
+      const checkExit = setInterval(() => {
+        if (!this.processes.get(id)?.child?.pid) {
+          clearInterval(checkExit);
+          clearTimeout(killer);
+          onResolve();
+        }
+      }, 100);
     });
   }
 

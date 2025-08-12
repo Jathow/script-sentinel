@@ -104,6 +104,14 @@ app.whenReady().then(() => {
 
   // Configure auto-updater (GitHub provider from package.json publish)
   autoUpdater.autoDownload = false;
+  // Basic crash reporting toggle could be wired to Sentry or similar; here we log unhandled errors
+  if (Storage.getSettings().crashReportingEnabled) {
+    process.on('uncaughtException', (err) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        win.webContents.send('log:event', { level: 'error', message: `Uncaught: ${err.message}` });
+      }
+    });
+  }
   autoUpdater.on('update-available', () => {
     for (const win of BrowserWindow.getAllWindows()) {
       win.webContents.send('updates:event', { type: 'available' });

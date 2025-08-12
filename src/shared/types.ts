@@ -61,6 +61,7 @@ export interface AppSettings {
   startMinimized?: boolean;
   updateChannel?: 'stable' | 'beta';
   logsPath?: string;
+  crashReportingEnabled?: boolean;
 }
 
 export interface PersistedData {

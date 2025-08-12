@@ -65,6 +65,15 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
               <span className="text-slate-300">Enable in-app toasts</span>
             </label>
           </div>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={!!settings?.crashReportingEnabled}
+              onChange={(e) => update({ crashReportingEnabled: e.target.checked })}
+              className="accent-emerald-500"
+            />
+            <span className="text-slate-300">Enable basic crash reporting</span>
+          </label>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <label className="flex items-center gap-2">
               <input

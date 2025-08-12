@@ -1,6 +1,7 @@
 {
   "name": "script-manager",
   "version": "0.1.0",
+  "description": "Script Sentinel – desktop script manager with start/stop, monitoring, logs, auto-restart, and Windows installer.",
   "private": true,
   "type": "module",
   "main": "dist-electron/main.js",
@@ -18,6 +19,7 @@
     "test:unit": "vitest run"
   },
   "devDependencies": {
+    "electron": "^31.0.2",
     "@playwright/test": "^1.45.0",
     "vitest": "^1.6.0",
     "@types/node": "^20.11.30",
@@ -47,7 +49,6 @@
     "standard-version": "^9.5.0"
   },
   "dependencies": {
-    "electron": "^31.0.2",
     "electron-updater": "^6.3.9",
     "pidusage": "^3.0.2",
     "react": "^18.3.1",

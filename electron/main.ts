@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, nativeTheme, Tray, Menu, nativeImage } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import path from 'node:path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { ensureDataFile, Storage } from './storage';
 import { registerIpcHandlers, createProcessManager } from './ipc';
@@ -35,10 +36,17 @@ function createWindow() {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
     logger.info('Loaded dev URL', { url: devUrl });
   } else {
-    // In production, our renderer is built into the dist/ directory
-    const prodIndex = path.join(process.resourcesPath, 'dist', 'index.html');
-    void mainWindow.loadFile(prodIndex);
-    logger.info('Loaded production renderer', { file: prodIndex });
+    // In production, our renderer is in resources/app/dist/index.html (not in asar)
+    const prodIndex = path.join(process.resourcesPath, 'app', 'dist', 'index.html');
+    // Fallbacks for different asar/resource layouts
+    const candidates = [
+      prodIndex,
+      path.join(process.resourcesPath, 'dist', 'index.html'),
+      path.join(__dirname, '..', 'dist', 'index.html'),
+    ];
+    const target = candidates.find((p) => fs.existsSync(p)) ?? candidates[0];
+    void mainWindow.loadFile(target);
+    logger.info('Loaded production renderer', { file: target });
   }
 
   mainWindow.on('closed', () => {

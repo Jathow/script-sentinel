@@ -15,6 +15,13 @@ let tray: Tray | null = null;
 let rebuildTrayTimer: NodeJS.Timeout | null = null;
 
 function createWindow() {
+  // Resolve correct preload path (.cjs in prod, .js in dev)
+  const preloadCandidates = [
+    path.join(__dirname, 'preload.cjs'),
+    path.join(__dirname, 'preload.js'),
+  ];
+  const preloadPath = preloadCandidates.find((p) => fs.existsSync(p)) ?? preloadCandidates[0];
+
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -23,10 +30,12 @@ function createWindow() {
     backgroundColor: '#0b0f14',
     titleBarStyle: 'hiddenInset',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: preloadPath,
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      // Sandbox can prevent CommonJS preload from loading correctly in production
+      // and is unnecessary here since we already use contextIsolation and no nodeIntegration
+      sandbox: false,
     },
   });
 

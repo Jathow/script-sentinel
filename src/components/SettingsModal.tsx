@@ -29,10 +29,12 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
     onClose();
   };
 
+  if (!open) return null;
+
   return (
-    <div className={`fixed inset-0 z-50 ${open ? '' : 'pointer-events-none'}`}>
+    <div className={`fixed inset-0 z-50`}>
       <div
-        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity ${open ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity opacity-100`}
         onClick={onClose}
       />
       <div className={`absolute left-1/2 top-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 transform rounded-lg border border-white/10 bg-[#0b0f14] shadow-xl`}>

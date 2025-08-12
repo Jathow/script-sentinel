@@ -125,19 +125,24 @@ export default function App() {
   const [cmdOpen, setCmdOpen] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement | null>(null);
   React.useEffect(() => {
-    window.api
+    const api = (window as unknown as { api?: Window['api'] }).api;
+    if (!api) {
+      setPong('no preload');
+      return;
+    }
+    api
       .ping()
       .then(setPong)
       .catch(() => setPong('ipc error'));
-    window.api.scripts
+    api.scripts
       .list()
       .then((list) => setScripts(list))
       .catch(() => setScripts([]));
-    window.api.profiles
+    api.profiles
       .list()
       .then((p) => setProfiles(p))
       .catch(() => setProfiles([]));
-    window.api.process.snapshots().then((snaps) => {
+    api.process.snapshots().then((snaps) => {
       if (!snaps) return;
       const next: typeof statuses = {};
       for (const s of snaps) {
@@ -151,7 +156,7 @@ export default function App() {
       }
       setStatuses(next);
     });
-    const off = window.api.process.onStatus((snap) => {
+    const off = api.process.onStatus((snap) => {
       setStatuses((prev) => ({
         ...prev,
         [snap.scriptId]: {
@@ -168,7 +173,7 @@ export default function App() {
       }));
       if ((snap.status as Status) === 'crashed') {
         // Check toast preference
-        window.api.settings.get().then((s) => {
+        api.settings.get().then((s) => {
           if (s.notificationsToastEnabled === false) return;
           const sdef = scripts.find((x) => x.id === snap.scriptId);
           addToast({
@@ -185,16 +190,16 @@ export default function App() {
   }, []);
 
   const toggleSelect = (id: string) => setSelected((p) => ({ ...p, [id]: !p[id] }));
-  const startOne = (id: string) => window.api.process.start(id);
-  const stopOne = (id: string) => window.api.process.stop(id);
-  const killOne = (id: string) => window.api.process.killTree(id);
+  const startOne = (id: string) => window.api?.process.start(id) as unknown as Promise<void>;
+  const stopOne = (id: string) => window.api?.process.stop(id) as unknown as Promise<void>;
+  const killOne = (id: string) => window.api?.process.killTree(id) as unknown as Promise<void>;
   const openLogs = (id: string) => {
     const s = scripts.find((x) => x.id === id);
     setActiveLog(s ? { id: s.id, name: s.name } : { id, name: id });
     setLogsOpen(true);
   };
-  const startSelected = () => Promise.all(Object.entries(selected).filter(([, v]) => v).map(([id]) => window.api.process.start(id)));
-  const stopAll = () => Promise.all(scripts.map((s) => window.api.process.stop(s.id)));
+  const startSelected = () => Promise.all(Object.entries(selected).filter(([, v]) => v).map(([id]) => window.api?.process.start(id) as unknown as Promise<void>));
+  const stopAll = () => Promise.all(scripts.map((s) => window.api?.process.stop(s.id) as unknown as Promise<void>));
   const openCreate = () => {
     setEditing(null);
     setEditorOpen(true);
@@ -268,8 +273,8 @@ export default function App() {
     { id: 'stop-all', title: 'Stop All', run: () => void stopAll() },
     ...(profileFilter !== 'all'
       ? [
-          { id: 'start-profile', title: 'Start Current Profile', run: () => window.api.profiles.startAll(profileFilter) },
-          { id: 'stop-profile', title: 'Stop Current Profile', run: () => window.api.profiles.stopAll(profileFilter) },
+          { id: 'start-profile', title: 'Start Current Profile', run: () => void window.api?.profiles.startAll(profileFilter) },
+          { id: 'stop-profile', title: 'Stop Current Profile', run: () => void window.api?.profiles.stopAll(profileFilter) },
         ]
       : []),
     { id: 'open-settings', title: 'Open Settings', run: () => setSettingsOpen(true) },
@@ -294,23 +299,23 @@ export default function App() {
           activeProfileId={profileFilter}
           onSelect={(id) => setProfileFilter(id)}
           onCreate={async (name) => {
-            const created = await window.api.profiles.upsert({ id: crypto.randomUUID(), name, scriptIds: [], autoStartOnLogin: false });
+            const created = await (window.api?.profiles.upsert({ id: crypto.randomUUID(), name, scriptIds: [], autoStartOnLogin: false }) as Promise<ScriptDefinition>);
             setProfiles((prev) => [...prev, created]);
           }}
           onRename={async (id, name) => {
             const p = profiles.find((x) => x.id === id);
             if (!p) return;
-            const updated = await window.api.profiles.upsert({ ...p, name });
+            const updated = await (window.api?.profiles.upsert({ ...p, name }) as Promise<ScriptDefinition>);
             setProfiles((prev) => prev.map((x) => (x.id === id ? updated : x)));
           }}
           onDelete={async (id) => {
-            await window.api.profiles.delete(id);
+            await window.api?.profiles.delete(id);
             setProfiles((prev) => prev.filter((x) => x.id !== id));
           }}
           onToggleAutostart={async (id, value) => {
             const p = profiles.find((x) => x.id === id);
             if (!p) return;
-            const updated = await window.api.profiles.upsert({ ...p, autoStartOnLogin: value });
+            const updated = await (window.api?.profiles.upsert({ ...p, autoStartOnLogin: value }) as Promise<ScriptDefinition>);
             setProfiles((prev) => prev.map((x) => (x.id === id ? updated : x)));
           }}
         />

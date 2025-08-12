@@ -4,7 +4,7 @@
   "description": "Script Sentinel – desktop script manager with start/stop, monitoring, logs, auto-restart, and Windows installer.",
   "private": true,
   "type": "module",
-  "main": "dist-electron/main.js",
+  "main": "dist-electron/main.mjs",
   "author": "Justin",
   "scripts": {
     "dev": "vite",
@@ -62,7 +62,11 @@
     "productName": "Script Sentinel",
     "files": [
       "dist/**",
-      "dist-electron/**",
+      {
+        "from": "dist-electron/",
+        "to": "dist-electron/",
+        "filter": ["**/*"]
+      },
       "index.html",
       "package.json"
     ],

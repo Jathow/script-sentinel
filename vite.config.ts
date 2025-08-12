@@ -13,7 +13,16 @@ export default defineConfig({
         startup();
       },
       vite: {
-        build: { outDir: 'dist-electron', sourcemap: true },
+        build: {
+          outDir: 'dist-electron',
+          sourcemap: true,
+          rollupOptions: {
+            output: {
+              format: 'esm',
+              entryFileNames: 'main.mjs',
+            },
+          },
+        },
       },
     }),
     electron({
@@ -22,7 +31,29 @@ export default defineConfig({
         reload();
       },
       vite: {
-        build: { outDir: 'dist-electron', sourcemap: true },
+        build: {
+          outDir: 'dist-electron',
+          sourcemap: true,
+          target: 'node20',
+          // Force library build in true CommonJS to avoid ESM syntax in .cjs output
+          lib: {
+            entry: 'electron/preload.ts',
+            formats: ['cjs'],
+            fileName: () => 'preload',
+          },
+          rollupOptions: {
+            external: ['electron'],
+            output: {
+              format: 'cjs',
+              exports: 'auto',
+              entryFileNames: 'preload.cjs',
+            },
+          },
+        },
+        esbuild: {
+          platform: 'node',
+          // Allow Rollup to handle CJS generation
+        },
       },
     }),
     renderer(),

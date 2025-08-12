@@ -59,6 +59,48 @@ export function writeAll(data: PersistedData): PersistedData {
   throw new Error('Invalid data format');
 }
 
+function isScriptDefinition(obj: unknown): obj is ScriptDefinition {
+  if (!obj || typeof obj !== 'object') return false;
+  const s = obj as ScriptDefinition;
+  return (
+    typeof s.id === 'string' &&
+    typeof s.name === 'string' &&
+    typeof s.command === 'string'
+  );
+}
+
+function isProfile(obj: unknown): obj is Profile {
+  if (!obj || typeof obj !== 'object') return false;
+  const p = obj as Profile;
+  return typeof p.id === 'string' && typeof p.name === 'string' && Array.isArray(p.scriptIds);
+}
+
+function validatePersistedData(data: PersistedData): void {
+  if (!data || typeof data !== 'object') throw new Error('Invalid data payload');
+  if (Number((data as unknown as { schemaVersion: unknown }).schemaVersion) !== 1)
+    throw new Error('Unsupported schema version');
+  if (!Array.isArray(data.scripts) || !Array.isArray(data.profiles)) {
+    throw new Error('Invalid data structure');
+  }
+  for (const s of data.scripts) {
+    if (!isScriptDefinition(s)) throw new Error('Invalid script entry');
+  }
+  for (const p of data.profiles) {
+    if (!isProfile(p)) throw new Error('Invalid profile entry');
+  }
+}
+
+function scriptsEqual(a: ScriptDefinition, b: ScriptDefinition): boolean {
+  return (
+    a.name === b.name &&
+    a.command === b.command &&
+    JSON.stringify(a.args ?? []) === JSON.stringify(b.args ?? []) &&
+    (a.cwd ?? '') === (b.cwd ?? '') &&
+    JSON.stringify(a.env ?? {}) === JSON.stringify(b.env ?? {}) &&
+    (a.restartPolicy ?? 'on-crash') === (b.restartPolicy ?? 'on-crash')
+  );
+}
+
 export const Storage = {
   listScripts(): ScriptDefinition[] {
     return readData().scripts;
@@ -105,23 +147,65 @@ export const Storage = {
     return readData();
   },
   importAll(newData: PersistedData, mode: 'merge' | 'replace' = 'merge'): PersistedData {
+    validatePersistedData(newData);
     if (mode === 'replace') {
       return writeAll(newData);
     }
-    // merge
+    // merge with conflict resolution
     return writeData((d) => {
-      // settings overwrite wholesale
-      d.settings = newData.settings ?? d.settings;
-      // scripts merge by id
-      const byId = new Map(d.scripts.map((s) => [s.id, s] as const));
-      for (const s of newData.scripts ?? []) {
-        byId.set(s.id, s);
+      // settings: shallow merge
+      d.settings = { ...d.settings, ...(newData.settings ?? {}) };
+
+      // Build existing indices
+      const existingById = new Map(d.scripts.map((s) => [s.id, s] as const));
+      const existingNames = new Set(d.scripts.map((s) => s.name));
+
+      for (const incoming of newData.scripts ?? []) {
+        const current = existingById.get(incoming.id);
+        if (!current) {
+          // no id conflict, add (ensure unique name)
+          let name = incoming.name;
+          let i = 1;
+          while (existingNames.has(name)) {
+            name = `${incoming.name} (${++i})`;
+          }
+          const toAdd = { ...incoming, name };
+          d.scripts.push(toAdd);
+          existingById.set(toAdd.id, toAdd);
+          existingNames.add(name);
+        } else if (!scriptsEqual(current, incoming)) {
+          // id conflict with different content -> keep existing, add a duplicated entry with new id
+          let name = `${incoming.name} (imported)`;
+          let i = 1;
+          while (existingNames.has(name)) {
+            name = `${incoming.name} (imported ${++i})`;
+          }
+          const clone: ScriptDefinition = { ...incoming, id: randomUUID(), name };
+          d.scripts.push(clone);
+          existingById.set(clone.id, clone);
+          existingNames.add(name);
+        } // else identical, skip
       }
-      d.scripts = Array.from(byId.values());
-      // profiles merge by id
+
+      // profiles: merge by id; drop references to missing scripts
       const profById = new Map(d.profiles.map((p) => [p.id, p] as const));
       for (const p of newData.profiles ?? []) {
-        profById.set(p.id, p);
+        if (!profById.has(p.id)) {
+          profById.set(p.id, { ...p, scriptIds: p.scriptIds.filter((sid) => existingById.has(sid)) });
+        } else {
+          const merged: Profile = {
+            ...profById.get(p.id)!,
+            name: profById.get(p.id)!.name, // keep existing name
+            scriptIds: Array.from(
+              new Set([
+                ...profById.get(p.id)!.scriptIds,
+                ...p.scriptIds.filter((sid) => existingById.has(sid)),
+              ]),
+            ),
+            autoStartOnLogin: profById.get(p.id)!.autoStartOnLogin || p.autoStartOnLogin,
+          };
+          profById.set(p.id, merged);
+        }
       }
       d.profiles = Array.from(profById.values());
     });

@@ -6,6 +6,9 @@ import pidusage from 'pidusage';
 import treeKill from 'tree-kill';
 import { setTimeout as delay } from 'node:timers/promises';
 import type { RuntimeStatus, ScriptDefinition, RuntimeStateSnapshot } from '../src/shared/types';
+import http from 'node:http';
+import https from 'node:https';
+import net from 'node:net';
 
 interface ManagedProc {
   child?: ChildProcessWithoutNullStreams;
@@ -17,6 +20,7 @@ interface ManagedProc {
   metrics?: { cpuPercent?: number; memMB?: number; uptimeMs?: number };
   stopping?: boolean;
   logStream?: fs.WriteStream;
+  healthy?: boolean;
 }
 
 export class ProcessManager {
@@ -85,6 +89,14 @@ export class ProcessManager {
           const stats = await pidusage(p.child.pid);
           const uptimeMs = p.startTime ? Date.now() - p.startTime : undefined;
           p.metrics = { cpuPercent: stats.cpu, memMB: stats.memory / (1024 * 1024), uptimeMs };
+          // Health check optional
+          const script = this.scripts().find((s) => s.id === id);
+          if (script?.healthCheck) {
+            const ok = await this.checkHealth(script.healthCheck);
+            p.healthy = ok;
+          } else {
+            p.healthy = undefined;
+          }
           this.emitStatus(id);
         } catch {
           // ignore transient pidusage errors
@@ -106,6 +118,7 @@ export class ProcessManager {
       memMB: p.metrics?.memMB,
       lastExitCode: p.lastExitCode ?? null,
       retries: p.retries,
+      healthy: p.healthy,
     };
   }
 
@@ -204,6 +217,41 @@ export class ProcessManager {
   async restart(id: string): Promise<void> {
     await this.stop(id);
     await this.start(id);
+  }
+
+  private async checkHealth(h: NonNullable<ScriptDefinition['healthCheck']>): Promise<boolean> {
+    if (h.port) {
+      const isOpen = await new Promise<boolean>((resolve) => {
+        const socket = net.createConnection({ port: h.port! });
+        socket.setTimeout(1000);
+        socket.on('connect', () => {
+          socket.destroy();
+          resolve(true);
+        });
+        socket.on('timeout', () => {
+          socket.destroy();
+          resolve(false);
+        });
+        socket.on('error', () => resolve(false));
+      });
+      if (!isOpen) return false;
+    }
+    if (h.url) {
+      const client = h.url.startsWith('https') ? https : http;
+      const ok = await new Promise<boolean>((resolve) => {
+        const req = client.get(h.url!, (res) => {
+          resolve(res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 300);
+        });
+        req.on('error', () => resolve(false));
+        req.setTimeout(1500, () => {
+          req.destroy();
+          resolve(false);
+        });
+      });
+      if (!ok) return false;
+    }
+    // command health check can be added later
+    return true;
   }
 }
 

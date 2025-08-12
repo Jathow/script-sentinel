@@ -79,7 +79,7 @@ function Card({
 export default function App() {
   const [pong, setPong] = React.useState<string>('');
   const [scripts, setScripts] = React.useState<Array<{ id: string; name: string }>>([]);
-  const [statuses, setStatuses] = React.useState<Record<string, { status: Status; cpu?: number; mem?: number; uptime?: number }>>({});
+  const [statuses, setStatuses] = React.useState<Record<string, { status: Status; cpu?: number; mem?: number; uptime?: number; healthy?: boolean }>>({});
   const [selected, setSelected] = React.useState<Record<string, boolean>>({});
   const [logsOpen, setLogsOpen] = React.useState(false);
   const [activeLog, setActiveLog] = React.useState<{ id: string; name: string } | null>(null);
@@ -103,6 +103,7 @@ export default function App() {
           cpu: s.cpuPercent,
           mem: s.memMB,
           uptime: s.uptimeMs,
+          healthy: (s as { healthy?: boolean }).healthy,
         };
       }
       setStatuses(next);
@@ -115,6 +116,7 @@ export default function App() {
           cpu: snap.cpuPercent,
           mem: snap.memMB,
           uptime: snap.uptimeMs,
+          healthy: (snap as { healthy?: boolean }).healthy,
         },
       }));
     });

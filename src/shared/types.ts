@@ -41,6 +41,7 @@ export interface RuntimeStateSnapshot {
   memMB?: number;
   lastExitCode?: number | null;
   retries?: number;
+  healthy?: boolean;
 }
 
 export interface Profile {

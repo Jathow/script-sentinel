@@ -17,5 +17,9 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint -- --max-warnings=0
       - run: npm run build
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: E2E tests
+        run: npm run test:e2e
 
 

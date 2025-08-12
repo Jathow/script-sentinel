@@ -48,4 +48,29 @@ export function sanitizeSettingsPatch(patch: unknown): Partial<AppSettings> {
   return out;
 }
 
+function containsUnsafeShellChars(s: string): boolean {
+  // Disallow characters often used for shell metacharacters even though we use shell:false
+  // This is a defense-in-depth validation against accidental injection when commands are copied from shells
+  return /[\n\r\0<>|;&`]/.test(s);
+}
+
+export function assertSafeCommand(command: unknown): asserts command is string {
+  assertString(command, 'command');
+  if (containsUnsafeShellChars(command)) throw new Error('Command contains unsafe characters');
+}
+
+export function assertSafeArgs(args: unknown): asserts args is string[] | undefined {
+  if (args === undefined) return;
+  assertStringArray(args, 'args');
+  for (const a of args) {
+    if (containsUnsafeShellChars(a)) throw new Error('Argument contains unsafe characters');
+  }
+}
+
+export function assertSafeCwd(cwd: unknown): asserts cwd is string | undefined {
+  if (cwd === undefined) return;
+  assertString(cwd, 'cwd');
+  if (/\0|\r|\n/.test(cwd)) throw new Error('cwd contains unsafe characters');
+}
+
 

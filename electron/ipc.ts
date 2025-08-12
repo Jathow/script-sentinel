@@ -9,7 +9,7 @@ import path from 'node:path';
 import { app } from 'electron';
 import type { ScriptDefinition, Profile, AppSettings } from '../src/shared/types';
 import { logManager } from './logger';
-import { assertProfileExists, assertScriptExists, assertString, sanitizeSettingsPatch, assertRecordStringString, assertStringArray, isPlainObject } from './validate';
+import { assertProfileExists, assertScriptExists, assertString, sanitizeSettingsPatch, assertRecordStringString, assertStringArray, isPlainObject, assertSafeCommand, assertSafeArgs, assertSafeCwd } from './validate';
 
 let pm: ProcessManager | null = null;
 
@@ -19,9 +19,9 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('scripts:create', (_e, input: Omit<ScriptDefinition, 'id'>) => {
     if (!isPlainObject(input)) throw new Error('Invalid script payload');
     assertString(input.name, 'name');
-    assertString(input.command, 'command');
-    if (input.args) assertStringArray(input.args, 'args');
-    if (input.cwd) assertString(input.cwd, 'cwd');
+    assertSafeCommand(input.command);
+    assertSafeArgs(input.args);
+    assertSafeCwd(input.cwd);
     if (input.env) assertRecordStringString(input.env, 'env');
     return Storage.createScript(input as Omit<ScriptDefinition, 'id'>);
   });
@@ -29,9 +29,9 @@ export function registerIpcHandlers(): void {
     if (!isPlainObject(script)) throw new Error('Invalid script payload');
     assertString(script.id, 'id');
     assertString(script.name, 'name');
-    assertString(script.command, 'command');
-    if (script.args) assertStringArray(script.args, 'args');
-    if (script.cwd) assertString(script.cwd, 'cwd');
+    assertSafeCommand(script.command);
+    assertSafeArgs(script.args);
+    assertSafeCwd(script.cwd);
     if (script.env) assertRecordStringString(script.env, 'env');
     return Storage.upsertScript(script as ScriptDefinition);
   });

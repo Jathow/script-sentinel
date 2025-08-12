@@ -49,6 +49,11 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.on('process:log:event', handler);
       return () => ipcRenderer.off('process:log:event', handler);
     },
+    onRestart: (cb: (evt: { scriptId: string; attempt: number }) => void) => {
+      const handler = (_: unknown, evt: { scriptId: string; attempt: number }) => cb(evt);
+      ipcRenderer.on('process:restart:event', handler);
+      return () => ipcRenderer.off('process:restart:event', handler);
+    },
     readLog: (id: string) => ipcRenderer.invoke('process:readLog', id) as Promise<string>,
   },
   updates: {
@@ -103,6 +108,7 @@ declare global {
         killTree: (id: string) => Promise<void>;
         onStatus: (cb: (snap: RuntimeStateSnapshot) => void) => () => void;
         onLog: (cb: (evt: { scriptId: string; text: string }) => void) => () => void;
+        onRestart: (cb: (evt: { scriptId: string; attempt: number }) => void) => () => void;
         readLog: (id: string) => Promise<string>;
       };
     };

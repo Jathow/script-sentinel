@@ -1,4 +1,4 @@
-import { BrowserWindow, app, Notification } from 'electron';
+import { app, Notification } from 'electron';
 import { Storage } from './storage';
 import { spawn, ChildProcessWithoutNullStreams } from 'node:child_process';
 import path from 'node:path';
@@ -67,15 +67,14 @@ export class ProcessManager {
     return path.join(dir, `${scriptId}.log`);
   }
 
-  private broadcast(channel: string, payload: unknown): void {
-    for (const win of BrowserWindow.getAllWindows()) {
-      win.webContents.send(channel, payload);
-    }
-  }
+  private broadcast(channel: string, payload: unknown): void {}
 
   private emitStatus(scriptId: string): void {
     const snap = this.snapshot(scriptId);
-    if (snap) this.broadcast('process:status:event', snap);
+    if (snap) {
+      const { eventBus } = require('./events');
+      eventBus.send('process:status:event', snap);
+    }
   }
 
   private writeLog(scriptId: string, text: string): void {
@@ -85,7 +84,8 @@ export class ProcessManager {
       managed.logStream = fs.createWriteStream(this.getLogPath(scriptId), { flags: 'a' });
     }
     managed.logStream.write(text);
-    this.broadcast('process:log:event', { scriptId, text });
+    const { eventBus } = require('./events');
+    eventBus.send('process:log:event', { scriptId, text });
   }
 
   private async sampleMetrics(): Promise<void> {
@@ -207,7 +207,8 @@ export class ProcessManager {
             this.emitStatus(id);
             await delay(waitMs);
             p!.retries += 1;
-            this.broadcast('process:restart:event', { scriptId: id, attempt: p!.retries });
+            const { eventBus } = require('./events');
+            eventBus.send('process:restart:event', { scriptId: id, attempt: p!.retries });
             await this.start(id);
             p!.nextRestartAt = undefined;
           }

@@ -25,7 +25,4 @@ npm run build
 - Live logs (tail)
 - Profiles for bulk start
 
-## Roadmap
-See `task.md` for milestones and tasks.
-
 

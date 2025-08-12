@@ -39,12 +39,18 @@ Conventions
 - process:snapshots → Promise<RuntimeStateSnapshot[] | undefined>
 - process:killTree (id: string) → Promise<void>
 - process:readLog (id: string) → Promise<string>
+- process:listLogs (id: string) → Promise<{ file: string; size: number; mtimeMs: number }[]>
+- process:readLogFile ({ scriptId: string; file: string }) → Promise<string>
 
 Events:
 - process:status:event (payload: RuntimeStateSnapshot)
   - Emitted on status/metrics/health updates
 - process:log:event (payload: { scriptId: string; text: string })
   - Emitted on stdout/stderr chunks
+  
+Additional event:
+- process:restart:event (payload: { scriptId: string; attempt: number })
+  - Emitted before an automatic restart attempt
 
 ## Updates
 - updates:check → Promise<{ ok: boolean; error?: string }>

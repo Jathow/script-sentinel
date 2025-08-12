@@ -82,13 +82,13 @@ export class ProcessManager {
   }
 
   private getLogPath(scriptId: string): string {
+    // legacy path retained for reference; rotation handled by logger
     const settings = Storage.getSettings();
     const baseDir = settings.logsPath?.trim()
       ? settings.logsPath.trim()
       : path.join(app.getPath('userData'), 'logs');
-    const dir = baseDir;
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    return path.join(dir, `${scriptId}.log`);
+    if (!fs.existsSync(baseDir)) fs.mkdirSync(baseDir, { recursive: true });
+    return path.join(baseDir, `${scriptId}.log`);
   }
 
   private broadcast(channel: string, payload: unknown): void {}
@@ -104,10 +104,9 @@ export class ProcessManager {
   private writeLog(scriptId: string, text: string): void {
     const managed = this.processes.get(scriptId);
     if (!managed) return;
-    if (!managed.logStream) {
-      managed.logStream = fs.createWriteStream(this.getLogPath(scriptId), { flags: 'a' });
-    }
-    managed.logStream.write(text);
+    // Write via rotating log manager
+    const { logManager } = require('./logger');
+    logManager.write(scriptId, text);
     const { eventBus } = require('./events');
     eventBus.send('process:log:event', { scriptId, text });
   }
@@ -214,10 +213,8 @@ export class ProcessManager {
           n.show();
         }
         // Close log stream between runs
-        if (p!.logStream) {
-          p!.logStream.end();
-          p!.logStream = undefined;
-        }
+        const { logManager } = require('./logger');
+        logManager.close(id);
 
         if (!wasStopping && (script.autoRestart || script.restartPolicy === 'always' || (script.restartPolicy === 'on-crash' && code !== 0))) {
           // backoff with cap

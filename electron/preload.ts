@@ -55,6 +55,11 @@ contextBridge.exposeInMainWorld('api', {
       return () => ipcRenderer.off('process:restart:event', handler);
     },
     readLog: (id: string) => ipcRenderer.invoke('process:readLog', id) as Promise<string>,
+    listLogs: (id: string) => ipcRenderer.invoke('process:listLogs', id) as Promise<
+      { file: string; size: number; mtimeMs: number }[]
+    >,
+    readLogFile: (scriptId: string, file: string) =>
+      ipcRenderer.invoke('process:readLogFile', { scriptId, file }) as Promise<string>,
   },
   updates: {
     check: () => ipcRenderer.invoke('updates:check') as Promise<{ ok: boolean; error?: string }>,
@@ -110,6 +115,8 @@ declare global {
         onLog: (cb: (evt: { scriptId: string; text: string }) => void) => () => void;
         onRestart: (cb: (evt: { scriptId: string; attempt: number }) => void) => () => void;
         readLog: (id: string) => Promise<string>;
+        listLogs: (id: string) => Promise<{ file: string; size: number; mtimeMs: number }[]>;
+        readLogFile: (scriptId: string, file: string) => Promise<string>;
       };
     };
   }

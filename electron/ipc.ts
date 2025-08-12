@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { app } from 'electron';
 import type { ScriptDefinition, Profile, AppSettings } from '../src/shared/types';
+import { logManager } from './logger';
 
 let pm: ProcessManager | null = null;
 
@@ -51,12 +52,14 @@ export function registerIpcHandlers(): void {
 
   // Logs
   ipcMain.handle('process:readLog', async (_e, scriptId: string) => {
-    const logPath = path.join(app.getPath('userData'), 'logs', `${scriptId}.log`);
-    try {
-      return fs.existsSync(logPath) ? fs.readFileSync(logPath, 'utf-8') : '';
-    } catch {
-      return '';
-    }
+    // return current log content
+    return logManager.read(scriptId, 'current');
+  });
+  ipcMain.handle('process:listLogs', async (_e, scriptId: string) => {
+    return logManager.list(scriptId);
+  });
+  ipcMain.handle('process:readLogFile', async (_e, payload: { scriptId: string; file: string }) => {
+    return logManager.read(payload.scriptId, payload.file);
   });
 }
 

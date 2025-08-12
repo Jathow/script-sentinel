@@ -2,6 +2,7 @@ import { ipcMain } from 'electron';
 import { Storage } from './storage';
 import type { PersistedData } from '../src/shared/types';
 import { ProcessManager } from './processManager';
+import { PidUsageSampler } from './metrics';
 import fs from 'node:fs';
 import path from 'node:path';
 import { app } from 'electron';
@@ -64,7 +65,7 @@ export function registerIpcHandlers(): void {
 }
 
 export function createProcessManager(): ProcessManager {
-  pm = new ProcessManager(() => Storage.listScripts());
+  pm = new ProcessManager(() => Storage.listScripts(), new PidUsageSampler());
   pm.init();
   return pm;
 }

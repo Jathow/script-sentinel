@@ -8,6 +8,8 @@ import treeKill from 'tree-kill';
 import { setTimeout as delay } from 'node:timers/promises';
 import { computeBackoffDelayMs, waitFor } from './backoff';
 import type { RuntimeStatus, ScriptDefinition, RuntimeStateSnapshot } from '../src/shared/types';
+import type { MetricsSampler } from './metrics';
+import { PidUsageSampler } from './metrics';
 import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
@@ -30,9 +32,11 @@ export class ProcessManager {
   private processes = new Map<string, ManagedProc>();
   private scripts: () => ScriptDefinition[];
   private metricsTimer?: NodeJS.Timeout;
+  private metricsSampler: MetricsSampler;
 
-  constructor(scriptsProvider: () => ScriptDefinition[]) {
+  constructor(scriptsProvider: () => ScriptDefinition[], sampler: MetricsSampler = new PidUsageSampler()) {
     this.scripts = scriptsProvider;
+    this.metricsSampler = sampler;
   }
 
   private static readonly ALLOWED_TRANSITIONS: Record<RuntimeStatus, RuntimeStatus[]> = {
@@ -115,9 +119,7 @@ export class ProcessManager {
     for (const [id, p] of this.processes) {
       if (p.child?.pid && p.status === 'running') {
         try {
-          const stats = await pidusage(p.child.pid);
-          const uptimeMs = p.startTime ? Date.now() - p.startTime : undefined;
-          p.metrics = { cpuPercent: stats.cpu, memMB: stats.memory / (1024 * 1024), uptimeMs };
+          p.metrics = await this.metricsSampler.sample(p.child.pid, p.startTime);
           // Health check optional
           const script = this.scripts().find((s) => s.id === id);
           if (script?.healthCheck) {

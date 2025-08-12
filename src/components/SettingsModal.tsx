@@ -136,6 +136,30 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
               />
             </label>
           </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={async () => {
+                await window.api.updates.check();
+              }}
+              className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
+            >
+              Check for updates
+            </button>
+            <button
+              onClick={async () => {
+                await window.api.updates.download();
+              }}
+              className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
+            >
+              Download update
+            </button>
+            <button
+              onClick={() => window.api.updates.quitAndInstall()}
+              className="rounded-md bg-emerald-600/90 px-3 py-1.5 text-sm text-white hover:bg-emerald-600"
+            >
+              Restart and install
+            </button>
+          </div>
         </div>
       </div>
     </div>

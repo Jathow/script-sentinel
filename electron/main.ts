@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, nativeTheme, Tray, Menu, nativeImage } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ensureDataFile, Storage } from './storage';
@@ -101,6 +102,34 @@ app.whenReady().then(() => {
   if (rebuildTrayTimer) clearInterval(rebuildTrayTimer);
   rebuildTrayTimer = setInterval(buildTrayMenu, 3000);
 
+  // Configure auto-updater (GitHub provider from package.json publish)
+  autoUpdater.autoDownload = false;
+  autoUpdater.on('update-available', () => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send('updates:event', { type: 'available' });
+    }
+  });
+  autoUpdater.on('update-not-available', () => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send('updates:event', { type: 'none' });
+    }
+  });
+  autoUpdater.on('download-progress', (info) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send('updates:event', { type: 'progress', info });
+    }
+  });
+  autoUpdater.on('update-downloaded', () => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send('updates:event', { type: 'downloaded' });
+    }
+  });
+  autoUpdater.on('error', (err) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send('updates:event', { type: 'error', message: err.message });
+    }
+  });
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -112,6 +141,26 @@ app.on('window-all-closed', () => {
 
 ipcMain.handle('process:ping', async () => {
   return 'pong';
+});
+
+ipcMain.handle('updates:check', async () => {
+  try {
+    await autoUpdater.checkForUpdates();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+});
+ipcMain.handle('updates:download', async () => {
+  try {
+    await autoUpdater.downloadUpdate();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+});
+ipcMain.handle('updates:quitAndInstall', async () => {
+  autoUpdater.quitAndInstall();
 });
 
 

@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('api', {
     import: (payload: { data: PersistedData; mode: 'merge' | 'replace' }) =>
       ipcRenderer.invoke('data:import', payload) as Promise<PersistedData>,
   },
+  
   process: {
     start: (id: string) => ipcRenderer.invoke('process:start', id) as Promise<void>,
     stop: (id: string) => ipcRenderer.invoke('process:stop', id) as Promise<void>,
@@ -49,6 +50,16 @@ contextBridge.exposeInMainWorld('api', {
       return () => ipcRenderer.off('process:log:event', handler);
     },
     readLog: (id: string) => ipcRenderer.invoke('process:readLog', id) as Promise<string>,
+  },
+  updates: {
+    check: () => ipcRenderer.invoke('updates:check') as Promise<{ ok: boolean; error?: string }>,
+    download: () => ipcRenderer.invoke('updates:download') as Promise<{ ok: boolean; error?: string }>,
+    quitAndInstall: () => ipcRenderer.invoke('updates:quitAndInstall') as Promise<void>,
+    onEvent: (cb: (evt: { type: string; info?: unknown; message?: string }) => void) => {
+      const handler = (_: unknown, evt: { type: string; info?: unknown; message?: string }) => cb(evt);
+      ipcRenderer.on('updates:event', handler);
+      return () => ipcRenderer.off('updates:event', handler);
+    },
   },
 });
 
@@ -76,6 +87,12 @@ declare global {
       data: {
         export: () => Promise<PersistedData>;
         import: (payload: { data: PersistedData; mode: 'merge' | 'replace' }) => Promise<PersistedData>;
+      };
+      updates: {
+        check: () => Promise<{ ok: boolean; error?: string }>;
+        download: () => Promise<{ ok: boolean; error?: string }>;
+        quitAndInstall: () => Promise<void>;
+        onEvent: (cb: (evt: { type: string; info?: unknown; message?: string }) => void) => () => void;
       };
       process: {
         start: (id: string) => Promise<void>;

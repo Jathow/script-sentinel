@@ -1,4 +1,5 @@
 import { BrowserWindow, app, Notification } from 'electron';
+import { Storage } from './storage';
 import { spawn, ChildProcessWithoutNullStreams } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -174,7 +175,9 @@ export class ProcessManager {
         p!.status = code === 0 && wasStopping ? 'stopped' : code === 0 ? 'stopped' : 'crashed';
         this.emitStatus(id);
         // Native notification on crash with click-to-restart
-        if (p!.status === 'crashed' && Notification.isSupported()) {
+        const settings = Storage.getSettings();
+        const allowNative = settings.notificationsNativeEnabled ?? settings.notifications ?? true;
+        if (p!.status === 'crashed' && Notification.isSupported() && allowNative) {
           const n = new Notification({
             title: 'Script crashed',
             body: `${script.name} exited with code ${code ?? 'unknown'}. Click to restart.`,

@@ -55,7 +55,9 @@ export interface Profile {
 
 export interface AppSettings {
   theme?: 'dark' | 'system';
-  notifications?: boolean;
+  notifications?: boolean; // legacy global toggle
+  notificationsNativeEnabled?: boolean;
+  notificationsToastEnabled?: boolean;
   startMinimized?: boolean;
   updateChannel?: 'stable' | 'beta';
   logsPath?: string;

@@ -3,6 +3,7 @@ import { LogsDrawer } from './components/LogsDrawer';
 import type { ScriptDefinition, Profile } from './shared/types';
 import { ScriptEditorModal } from './components/ScriptEditorModal';
 import { ProfilesSidebar } from './components/ProfilesSidebar';
+import { SettingsModal } from './components/SettingsModal';
 import { Toasts, useToasts } from './components/Toasts';
 
 type Status = 'running' | 'starting' | 'stopped' | 'crashed' | 'restarting';
@@ -117,6 +118,7 @@ export default function App() {
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ScriptDefinition | null>(null);
   const { toasts, add: addToast, remove: removeToast } = useToasts();
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
   React.useEffect(() => {
     window.api
       .ping()
@@ -160,11 +162,15 @@ export default function App() {
         },
       }));
       if ((snap.status as Status) === 'crashed') {
-        const s = scripts.find((x) => x.id === snap.scriptId);
-        addToast({
-          title: 'Script crashed',
-          body: `${s?.name ?? snap.scriptId} exited with code ${snap.lastExitCode ?? 'unknown'}`,
-          kind: 'error',
+        // Check toast preference
+        window.api.settings.get().then((s) => {
+          if (s.notificationsToastEnabled === false) return;
+          const sdef = scripts.find((x) => x.id === snap.scriptId);
+          addToast({
+            title: 'Script crashed',
+            body: `${sdef?.name ?? snap.scriptId} exited with code ${snap.lastExitCode ?? 'unknown'}`,
+            kind: 'error',
+          });
         });
       }
     });
@@ -221,7 +227,10 @@ export default function App() {
             <div className="h-7 w-7 rounded-md bg-emerald-500/20 ring-1 ring-emerald-400/50" />
             <h1 className="text-lg font-semibold tracking-wide">Script Manager</h1>
           </div>
-          <div className="text-xs text-slate-400">IPC: {pong}</div>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSettingsOpen(true)} className="rounded-md bg-white/10 px-3 py-1.5 text-xs text-white hover:bg-white/20">Settings</button>
+            <div className="text-xs text-slate-400">IPC: {pong}</div>
+          </div>
         </div>
       </header>
       <main className="mx-auto flex max-w-7xl gap-6 px-6 py-8">
@@ -350,6 +359,7 @@ export default function App() {
         onSaved={onSaved}
         profiles={profiles}
       />
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <Toasts toasts={toasts} onClose={removeToast} />
     </div>
   );

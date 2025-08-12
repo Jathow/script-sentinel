@@ -13,6 +13,7 @@ import { PidUsageSampler } from './metrics';
 import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
+import { detectSecretValues, maskTextWithSecrets } from './secrets';
 
 interface ManagedProc {
   child?: ChildProcessWithoutNullStreams;
@@ -26,6 +27,7 @@ interface ManagedProc {
   logStream?: fs.WriteStream;
   healthy?: boolean;
   nextRestartAt?: number;
+  secretValues?: string[];
 }
 
 export class ProcessManager {
@@ -108,11 +110,13 @@ export class ProcessManager {
   private writeLog(scriptId: string, text: string): void {
     const managed = this.processes.get(scriptId);
     if (!managed) return;
+    // Mask secrets before writing
+    const masked = maskTextWithSecrets(text, managed.secretValues ?? []);
     // Write via rotating log manager
     const { logManager } = require('./logger');
-    logManager.write(scriptId, text);
+    logManager.write(scriptId, masked);
     const { eventBus } = require('./events');
-    eventBus.send('process:log:event', { scriptId, text });
+    eventBus.send('process:log:event', { scriptId, text: masked });
   }
 
   private async sampleMetrics(): Promise<void> {
@@ -182,6 +186,12 @@ export class ProcessManager {
       });
       p!.child = child;
       p!.stopping = false;
+      // detect secrets once per run
+      try {
+        p!.secretValues = detectSecretValues(script.env);
+      } catch {
+        p!.secretValues = [];
+      }
 
       child.stdout.on('data', (buf: Buffer) => this.writeLog(id, buf.toString()))
         .setEncoding('utf-8');

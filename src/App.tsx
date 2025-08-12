@@ -5,6 +5,7 @@ import { ScriptEditorModal } from './components/ScriptEditorModal';
 import { ProfilesSidebar } from './components/ProfilesSidebar';
 import { SettingsModal } from './components/SettingsModal';
 import { Toasts, useToasts } from './components/Toasts';
+import { ScriptCard } from './components/ScriptCard';
 
 type Status = 'running' | 'starting' | 'stopped' | 'crashed' | 'restarting';
 
@@ -364,7 +365,7 @@ export default function App() {
             </div>
           ) : (
             filtered.map((s) => (
-              <Card
+              <ScriptCard
                 key={s.id}
                 title={s.name}
                 status={statuses[s.id]?.status ?? 'stopped'}

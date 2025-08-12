@@ -47,6 +47,13 @@ app.whenReady().then(() => {
   const uniqueScriptIds = Array.from(
     new Set(autostartProfiles.flatMap((p) => p.scriptIds)),
   );
+  // Enable app auto-launch on Windows if any profile is set to auto-start
+  if (process.platform === 'win32') {
+    app.setLoginItemSettings({
+      openAtLogin: autostartProfiles.length > 0,
+      openAsHidden: true,
+    });
+  }
   for (const sid of uniqueScriptIds) {
     void pm.start(sid);
   }

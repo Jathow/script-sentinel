@@ -65,6 +65,37 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
               <span className="text-slate-300">Enable in-app toasts</span>
             </label>
           </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={!!settings?.startMinimized}
+                onChange={(e) => update({ startMinimized: e.target.checked })}
+                className="accent-emerald-500"
+              />
+              <span className="text-slate-300">Start minimized</span>
+            </label>
+            <label className="block">
+              <div className="mb-1 text-slate-300">Update channel</div>
+              <select
+                value={settings?.updateChannel ?? 'stable'}
+                onChange={(e) => update({ updateChannel: e.target.value as 'stable' | 'beta' })}
+                className="w-full rounded-md border border-white/10 bg-black/40 px-2 py-1.5 text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              >
+                <option value="stable">Stable</option>
+                <option value="beta">Beta</option>
+              </select>
+            </label>
+          </div>
+          <label className="block">
+            <div className="mb-1 text-slate-300">Logs path</div>
+            <input
+              value={settings?.logsPath ?? ''}
+              onChange={(e) => update({ logsPath: e.target.value })}
+              placeholder="Leave empty for default"
+              className="w-full rounded-md border border-white/10 bg-black/40 px-2 py-1.5 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            />
+          </label>
         </div>
       </div>
     </div>

@@ -58,7 +58,11 @@ export class ProcessManager {
   }
 
   private getLogPath(scriptId: string): string {
-    const dir = path.join(app.getPath('userData'), 'logs');
+    const settings = Storage.getSettings();
+    const baseDir = settings.logsPath?.trim()
+      ? settings.logsPath.trim()
+      : path.join(app.getPath('userData'), 'logs');
+    const dir = baseDir;
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     return path.join(dir, `${scriptId}.log`);
   }

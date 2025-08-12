@@ -60,6 +60,11 @@ app.whenReady().then(() => {
     void pm.start(sid);
   }
   createWindow();
+  const s = Storage.getSettings();
+  if (s.startMinimized && mainWindow) {
+    mainWindow.minimize();
+    mainWindow.hide();
+  }
 
   // Setup system tray with quick start/stop
   const emptyPng = nativeImage.createFromDataURL(

@@ -35,8 +35,10 @@ function createWindow() {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
     logger.info('Loaded dev URL', { url: devUrl });
   } else {
-    void mainWindow.loadFile(path.join(process.resourcesPath, 'index.html'));
-    logger.info('Loaded production index.html');
+    // In production, our renderer is built into the dist/ directory
+    const prodIndex = path.join(process.resourcesPath, 'dist', 'index.html');
+    void mainWindow.loadFile(prodIndex);
+    logger.info('Loaded production renderer', { file: prodIndex });
   }
 
   mainWindow.on('closed', () => {

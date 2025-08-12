@@ -2,6 +2,7 @@ import React from 'react';
 import { LogsDrawer } from './components/LogsDrawer';
 import type { ScriptDefinition, Profile } from './shared/types';
 import { ScriptEditorModal } from './components/ScriptEditorModal';
+import { ProfilesSidebar } from './components/ProfilesSidebar';
 
 type Status = 'running' | 'starting' | 'stopped' | 'crashed' | 'restarting';
 
@@ -213,7 +214,27 @@ export default function App() {
           <div className="text-xs text-slate-400">IPC: {pong}</div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-6 py-8">
+      <main className="mx-auto flex max-w-7xl gap-6 px-6 py-8">
+        <ProfilesSidebar
+          profiles={profiles}
+          activeProfileId={profileFilter}
+          onSelect={(id) => setProfileFilter(id)}
+          onCreate={async (name) => {
+            const created = await window.api.profiles.upsert({ id: crypto.randomUUID(), name, scriptIds: [], autoStartOnLogin: false });
+            setProfiles((prev) => [...prev, created]);
+          }}
+          onRename={async (id, name) => {
+            const p = profiles.find((x) => x.id === id);
+            if (!p) return;
+            const updated = await window.api.profiles.upsert({ ...p, name });
+            setProfiles((prev) => prev.map((x) => (x.id === id ? updated : x)));
+          }}
+          onDelete={async (id) => {
+            await window.api.profiles.delete(id);
+            setProfiles((prev) => prev.filter((x) => x.id !== id));
+          }}
+        />
+        <div className="min-w-0 flex-1">
         <div className="mb-6 grid grid-cols-1 items-center gap-3 md:grid-cols-2 lg:grid-cols-3">
           <div className="text-sm text-slate-400">Dark, modern server console theme</div>
           <div className="flex items-center gap-2">
@@ -280,6 +301,7 @@ export default function App() {
               />
             ))
           )}
+        </div>
         </div>
       </main>
       <LogsDrawer

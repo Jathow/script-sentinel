@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { ScriptDefinition, Profile, AppSettings, RuntimeStateSnapshot } from '../src/shared/types';
+import type { PersistedData } from '../src/shared/types';
 
 contextBridge.exposeInMainWorld('api', {
   ping: () => ipcRenderer.invoke('process:ping') as Promise<string>,
@@ -22,6 +23,11 @@ contextBridge.exposeInMainWorld('api', {
     get: () => ipcRenderer.invoke('settings:get') as Promise<AppSettings>,
     update: (patch: Partial<AppSettings>) =>
       ipcRenderer.invoke('settings:update', patch) as Promise<AppSettings>,
+  },
+  data: {
+    export: () => ipcRenderer.invoke('data:export') as Promise<PersistedData>,
+    import: (payload: { data: PersistedData; mode: 'merge' | 'replace' }) =>
+      ipcRenderer.invoke('data:import', payload) as Promise<PersistedData>,
   },
   process: {
     start: (id: string) => ipcRenderer.invoke('process:start', id) as Promise<void>,
@@ -66,6 +72,10 @@ declare global {
       settings: {
         get: () => Promise<AppSettings>;
         update: (patch: Partial<AppSettings>) => Promise<AppSettings>;
+      };
+      data: {
+        export: () => Promise<PersistedData>;
+        import: (payload: { data: PersistedData; mode: 'merge' | 'replace' }) => Promise<PersistedData>;
       };
       process: {
         start: (id: string) => Promise<void>;

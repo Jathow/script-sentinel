@@ -96,6 +96,46 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
               className="w-full rounded-md border border-white/10 bg-black/40 px-2 py-1.5 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
           </label>
+          <div className="flex gap-2">
+            <button
+              onClick={async () => {
+                const data = await window.api.data.export();
+                const blob = new Blob([JSON.stringify(data, null, 2)], {
+                  type: 'application/json',
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'script-sentinel-backup.json';
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
+            >
+              Export Config
+            </button>
+            <label className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">
+              Import Config
+              <input
+                type="file"
+                accept="application/json"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const text = await file.text();
+                  try {
+                    const json = JSON.parse(text);
+                    await window.api.data.import({ data: json, mode: 'merge' });
+                    onClose();
+                    location.reload();
+                  } catch {
+                    // simple ignore; could toast
+                  }
+                }}
+              />
+            </label>
+          </div>
         </div>
       </div>
     </div>

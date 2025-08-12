@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
 import { Storage } from './storage';
+import type { PersistedData } from '../src/shared/types';
 import { ProcessManager } from './processManager';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -35,6 +36,10 @@ export function registerIpcHandlers(): void {
   // Settings
   ipcMain.handle('settings:get', () => Storage.getSettings());
   ipcMain.handle('settings:update', (_e, patch: Partial<AppSettings>) => Storage.updateSettings(patch));
+  ipcMain.handle('data:export', () => Storage.exportAll());
+  ipcMain.handle('data:import', (_e, payload: { data: PersistedData; mode: 'merge' | 'replace' }) =>
+    Storage.importAll(payload.data, payload.mode),
+  );
 
   // Process control
   ipcMain.handle('process:start', async (_e, id: string) => pm?.start(id));

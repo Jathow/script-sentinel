@@ -50,6 +50,15 @@ export function writeData(mutator: (d: PersistedData) => void): PersistedData {
   return data;
 }
 
+export function writeAll(data: PersistedData): PersistedData {
+  // naive validation
+  if (data && typeof data === 'object' && data.schemaVersion === 1) {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    return data;
+  }
+  throw new Error('Invalid data format');
+}
+
 export const Storage = {
   listScripts(): ScriptDefinition[] {
     return readData().scripts;
@@ -91,6 +100,31 @@ export const Storage = {
     return writeData((d) => {
       d.settings = { ...d.settings, ...patch };
     }).settings;
+  },
+  exportAll(): PersistedData {
+    return readData();
+  },
+  importAll(newData: PersistedData, mode: 'merge' | 'replace' = 'merge'): PersistedData {
+    if (mode === 'replace') {
+      return writeAll(newData);
+    }
+    // merge
+    return writeData((d) => {
+      // settings overwrite wholesale
+      d.settings = newData.settings ?? d.settings;
+      // scripts merge by id
+      const byId = new Map(d.scripts.map((s) => [s.id, s] as const));
+      for (const s of newData.scripts ?? []) {
+        byId.set(s.id, s);
+      }
+      d.scripts = Array.from(byId.values());
+      // profiles merge by id
+      const profById = new Map(d.profiles.map((p) => [p.id, p] as const));
+      for (const p of newData.profiles ?? []) {
+        profById.set(p.id, p);
+      }
+      d.profiles = Array.from(profById.values());
+    });
   },
 };
 

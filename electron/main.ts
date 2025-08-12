@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ensureDataFile, Storage } from './storage';
 import { registerIpcHandlers, createProcessManager } from './ipc';
+import { logger } from './appLogger';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -31,8 +32,10 @@ function createWindow() {
   if (devUrl) {
     void mainWindow.loadURL(devUrl);
     mainWindow.webContents.openDevTools({ mode: 'detach' });
+    logger.info('Loaded dev URL', { url: devUrl });
   } else {
     void mainWindow.loadFile(path.join(process.resourcesPath, 'index.html'));
+    logger.info('Loaded production index.html');
   }
 
   mainWindow.on('closed', () => {
@@ -42,6 +45,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
   nativeTheme.themeSource = 'dark';
+  logger.info('App ready');
   ensureDataFile();
   registerIpcHandlers();
   const pm = createProcessManager();
@@ -58,6 +62,7 @@ app.whenReady().then(() => {
     });
   }
   for (const sid of uniqueScriptIds) {
+    logger.info('Auto-starting script', { scriptId: sid });
     void pm.start(sid);
   }
   createWindow();

@@ -44,6 +44,10 @@ Conventions
 - process:readLogFile ({ scriptId: string; file: string }) → Promise<string>
 - process:testRun ({ command, args?, cwd?, env?, timeoutMs? }) → Promise<{ exitCode: number | null; stdout: string; stderr: string; timedOut: boolean; error?: string }>
 
+## App Log
+- appLog.read → Promise<string> (reads structured main-process app log)
+- appLog.list → Promise<{ file: string; size: number; mtimeMs: number }[]>
+
 Events:
 - process:status:event (payload: RuntimeStateSnapshot)
   - Emitted on status/metrics/health updates

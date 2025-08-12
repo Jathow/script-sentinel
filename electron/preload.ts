@@ -92,6 +92,13 @@ contextBridge.exposeInMainWorld('api', {
       return () => ipcRenderer.off('security:permission:warn', handler);
     },
   },
+  // Structured logging read access for app log
+  appLog: {
+    read: () => ipcRenderer.invoke('process:readLog', 'app') as Promise<string>,
+    list: () => ipcRenderer.invoke('process:listLogs', 'app') as Promise<
+      { file: string; size: number; mtimeMs: number }[]
+    >,
+  },
 });
 
 declare global {
@@ -130,6 +137,10 @@ declare global {
         onPermissionWarn: (
           cb: (evt: { scriptId: string; name: string; reason: string }) => void,
         ) => () => void;
+      };
+      appLog: {
+        read: () => Promise<string>;
+        list: () => Promise<{ file: string; size: number; mtimeMs: number }[]>;
       };
       process: {
         start: (id: string) => Promise<void>;

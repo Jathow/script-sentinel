@@ -25,11 +25,16 @@ function Card({ title, status }: { title: string; status: 'running' | 'stopped' 
 
 export default function App() {
   const [pong, setPong] = React.useState<string>('');
+  const [scripts, setScripts] = React.useState<Array<{ id: string; name: string }>>([]);
   React.useEffect(() => {
     window.api
       .ping()
       .then(setPong)
       .catch(() => setPong('ipc error'));
+    window.api.scripts
+      .list()
+      .then((list) => setScripts(list.map((s) => ({ id: s.id, name: s.name }))))
+      .catch(() => setScripts([]));
   }, []);
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b0f14] to-[#0a0e13] text-slate-200">
@@ -51,9 +56,13 @@ export default function App() {
           </div>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <Card title="API Server" status="running" />
-          <Card title="Worker Queue" status="stopped" />
-          <Card title="Data Sync" status="crashed" />
+          {scripts.length === 0 ? (
+            <div className="rounded-lg border border-white/10 bg-black/20 p-6 text-slate-400">
+              No scripts yet. Use the upcoming editor to add one.
+            </div>
+          ) : (
+            scripts.map((s) => <Card key={s.id} title={s.name} status="stopped" />)
+          )}
         </div>
       </main>
     </div>

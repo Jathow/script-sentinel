@@ -1,6 +1,8 @@
 import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ensureDataFile } from './storage';
+import { registerIpcHandlers } from './ipc';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -37,6 +39,8 @@ function createWindow() {
 
 app.whenReady().then(() => {
   nativeTheme.themeSource = 'dark';
+  ensureDataFile();
+  registerIpcHandlers();
   createWindow();
 
   app.on('activate', () => {

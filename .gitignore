@@ -7,5 +7,6 @@ out
 *.lock
 coverage
 .husky/_
+task.md
 
 

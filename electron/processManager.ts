@@ -34,6 +34,29 @@ export class ProcessManager {
     this.scripts = scriptsProvider;
   }
 
+  private static readonly ALLOWED_TRANSITIONS: Record<RuntimeStatus, RuntimeStatus[]> = {
+    stopped: ['starting', 'restarting'],
+    starting: ['running', 'stopped', 'crashed'],
+    running: ['stopped', 'crashed', 'restarting'],
+    crashed: ['starting', 'restarting', 'stopped'],
+    restarting: ['starting', 'stopped'],
+  } as const;
+
+  private setStatus(scriptId: string, next: RuntimeStatus): void {
+    const managed = this.processes.get(scriptId);
+    if (!managed) return;
+    const current = managed.status;
+    const allowed = ProcessManager.ALLOWED_TRANSITIONS[current] ?? [];
+    if (current !== next && !allowed.includes(next)) {
+      return; // ignore invalid transition
+    }
+    managed.status = next;
+    if (next === 'starting') {
+      managed.startTime = Date.now();
+    }
+    this.emitStatus(scriptId);
+  }
+
   init(): void {
     // Initialize states for all scripts
     for (const s of this.scripts()) {
@@ -147,9 +170,7 @@ export class ProcessManager {
     if (p.child) return; // already running/starting
 
     const spawnOnce = () => {
-      p!.status = 'starting';
-      p!.startTime = Date.now();
-      this.emitStatus(id);
+      this.setStatus(id, 'starting');
 
       const child = spawn(script.command, script.args ?? [], {
         cwd: script.cwd ?? process.cwd(),
@@ -166,8 +187,7 @@ export class ProcessManager {
         .setEncoding('utf-8');
 
       child.on('spawn', () => {
-        p!.status = 'running';
-        this.emitStatus(id);
+        this.setStatus(id, 'running');
       });
       child.on('error', (err) => {
         this.writeLog(id, `\n[error] ${err.message}\n`);
@@ -176,8 +196,8 @@ export class ProcessManager {
         p!.lastExitCode = code ?? null;
         p!.child = undefined;
         const wasStopping = p!.stopping === true;
-        p!.status = code === 0 && wasStopping ? 'stopped' : code === 0 ? 'stopped' : 'crashed';
-        this.emitStatus(id);
+        const next: RuntimeStatus = code === 0 ? 'stopped' : 'crashed';
+        this.setStatus(id, next);
         // Native notification on crash with click-to-restart
         const settings = Storage.getSettings();
         const allowNative = settings.notificationsNativeEnabled ?? settings.notifications ?? true;
@@ -241,6 +261,7 @@ export class ProcessManager {
   }
 
   async restart(id: string): Promise<void> {
+    this.setStatus(id, 'restarting');
     await this.stop(id);
     await this.start(id);
   }

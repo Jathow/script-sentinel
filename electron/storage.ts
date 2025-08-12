@@ -3,6 +3,7 @@ import path from 'node:path';
 import { app } from 'electron';
 import { randomUUID } from 'node:crypto';
 import type { PersistedData, ScriptDefinition, Profile, AppSettings } from '../src/shared/types';
+import { applyMigrations } from './migrations';
 
 const DATA_FILE = path.join(app.getPath('userData'), 'data.json');
 
@@ -40,7 +41,11 @@ export function readData(): PersistedData {
   ensureDataFile();
   const raw = fs.readFileSync(DATA_FILE, 'utf-8');
   const data = JSON.parse(raw) as PersistedData;
-  return data;
+  const migrated = applyMigrations(data);
+  if (migrated !== data) {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(migrated, null, 2));
+  }
+  return migrated;
 }
 
 export function writeData(mutator: (d: PersistedData) => void): PersistedData {
@@ -145,6 +150,19 @@ export const Storage = {
   },
   exportAll(): PersistedData {
     return readData();
+  },
+  seedDefaults(): PersistedData {
+    // merge in DEFAULT_DATA entries if missing
+    return writeData((d) => {
+      // scripts: add example if none
+      if (!d.scripts || d.scripts.length === 0) {
+        d.scripts = [...DEFAULT_DATA.scripts];
+      }
+      // profiles: ensure array
+      if (!Array.isArray(d.profiles)) d.profiles = [];
+      // settings: ensure defaults
+      d.settings = { ...DEFAULT_DATA.settings, ...(d.settings ?? {}) } as AppSettings;
+    });
   },
   importAll(newData: PersistedData, mode: 'merge' | 'replace' = 'merge'): PersistedData {
     validatePersistedData(newData);

@@ -42,6 +42,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('data:import', (_e, payload: { data: PersistedData; mode: 'merge' | 'replace' }) =>
     Storage.importAll(payload.data, payload.mode),
   );
+  ipcMain.handle('data:seed', () => Storage.seedDefaults());
 
   // Process control
   ipcMain.handle('process:start', async (_e, id: string) => pm?.start(id));

@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld('api', {
     export: () => ipcRenderer.invoke('data:export') as Promise<PersistedData>,
     import: (payload: { data: PersistedData; mode: 'merge' | 'replace' }) =>
       ipcRenderer.invoke('data:import', payload) as Promise<PersistedData>,
+    seed: () => ipcRenderer.invoke('data:seed') as Promise<PersistedData>,
   },
   
   process: {
@@ -97,6 +98,7 @@ declare global {
       data: {
         export: () => Promise<PersistedData>;
         import: (payload: { data: PersistedData; mode: 'merge' | 'replace' }) => Promise<PersistedData>;
+        seed: () => Promise<PersistedData>;
       };
       updates: {
         check: () => Promise<{ ok: boolean; error?: string }>;

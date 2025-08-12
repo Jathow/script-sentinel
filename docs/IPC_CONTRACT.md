@@ -30,6 +30,7 @@ Conventions
 ## Data Import/Export
 - data:export → Promise<PersistedData>
 - data:import ({ data: PersistedData, mode: 'merge' | 'replace' }) → Promise<PersistedData>
+- data:seed → Promise<PersistedData>
 
 ## Process Control
 - process:start (id: string) → Promise<void>

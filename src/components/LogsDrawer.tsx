@@ -59,6 +59,9 @@ export function LogsDrawer({
     <div
       className={`fixed inset-0 z-40 transition ${open ? 'pointer-events-auto' : 'pointer-events-none'}`}
       aria-hidden={!open}
+      role="dialog"
+      aria-modal="true"
+      aria-label={scriptName ? `Logs for ${scriptName}` : 'Logs'}
     >
       <div
         className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity ${open ? 'opacity-100' : 'opacity-0'}`}

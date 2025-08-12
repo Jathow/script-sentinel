@@ -112,7 +112,7 @@ export function ScriptEditorModal({
   };
 
   return (
-    <div className={`fixed inset-0 z-40 ${open ? '' : 'pointer-events-none'}`}>
+    <div className={`fixed inset-0 z-40 ${open ? '' : 'pointer-events-none'}`} role="dialog" aria-modal="true" aria-label={initial ? 'Edit script' : 'Add script'}>
       <div
         className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity ${open ? 'opacity-100' : 'opacity-0'}`}
         onClick={onClose}

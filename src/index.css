@@ -18,4 +18,10 @@ body {
   @apply h-2 w-2 rounded-full shadow-[0_0_12px];
 }
 
+/* Global focus visibility for interactive controls */
+button:focus-visible, [role="button"]:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid #22c55e; /* emerald-500 */
+  outline-offset: 2px;
+}
+
 

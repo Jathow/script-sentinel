@@ -257,19 +257,19 @@ export default function App() {
   }, [filtered, startSelected, stopAll]);
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b0f14] to-[#0a0e13] text-slate-200">
-      <header className="sticky top-0 z-10 border-b border-white/10 bg-black/30 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-white/10 bg-black/30 backdrop-blur" role="banner">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="h-7 w-7 rounded-md bg-emerald-500/20 ring-1 ring-emerald-400/50" />
             <h1 className="text-lg font-semibold tracking-wide">Script Manager</h1>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => setSettingsOpen(true)} className="rounded-md bg-white/10 px-3 py-1.5 text-xs text-white hover:bg-white/20">Settings</button>
+            <button aria-label="Open settings" onClick={() => setSettingsOpen(true)} className="rounded-md bg-white/10 px-3 py-1.5 text-xs text-white hover:bg-white/20">Settings</button>
             <div className="text-xs text-slate-400">IPC: {pong}</div>
           </div>
         </div>
       </header>
-      <main className="mx-auto flex max-w-7xl gap-6 px-6 py-8">
+      <main className="mx-auto flex max-w-7xl gap-6 px-6 py-8" role="main">
         <ProfilesSidebar
           profiles={profiles}
           activeProfileId={profileFilter}
@@ -296,7 +296,7 @@ export default function App() {
           }}
         />
         <div className="min-w-0 flex-1">
-        <div className="mb-6 grid grid-cols-1 items-center gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mb-6 grid grid-cols-1 items-center gap-3 md:grid-cols-2 lg:grid-cols-3" aria-label="Toolbar" role="region">
           <div className="text-sm text-slate-400">Dark, modern server console theme</div>
           <div className="flex items-center gap-2">
             <input
@@ -304,11 +304,13 @@ export default function App() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name"
+              aria-label="Search scripts by name"
               className="w-full rounded-md border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as Status | 'all')}
+              aria-label="Filter by status"
               className="rounded-md border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             >
               <option value="all">All statuses</option>
@@ -321,6 +323,7 @@ export default function App() {
             <select
               value={profileFilter}
               onChange={(e) => setProfileFilter(e.target.value)}
+              aria-label="Filter by profile"
               className="rounded-md border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             >
               <option value="all">All profiles</option>
@@ -332,13 +335,13 @@ export default function App() {
             </select>
           </div>
           <div className="flex justify-end gap-2">
-            <button onClick={openCreate} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Add Script</button>
-            <button onClick={startSelected} className="rounded-md bg-emerald-500/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500">Start Selected</button>
-            <button onClick={stopAll} className="rounded-md bg-rose-500/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-500">Stop All</button>
+            <button aria-label="Add script" onClick={openCreate} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Add Script</button>
+            <button aria-label="Start selected scripts" onClick={startSelected} className="rounded-md bg-emerald-500/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500">Start Selected</button>
+            <button aria-label="Stop all scripts" onClick={stopAll} className="rounded-md bg-rose-500/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-500">Stop All</button>
             {profileFilter !== 'all' && (
               <>
-                <button onClick={() => window.api.profiles.startAll(profileFilter)} className="rounded-md bg-emerald-600/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-600">Start Profile</button>
-                <button onClick={() => window.api.profiles.stopAll(profileFilter)} className="rounded-md bg-rose-600/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-600">Stop Profile</button>
+                <button aria-label="Start all scripts in selected profile" onClick={() => window.api.profiles.startAll(profileFilter)} className="rounded-md bg-emerald-600/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-600">Start Profile</button>
+                <button aria-label="Stop all scripts in selected profile" onClick={() => window.api.profiles.stopAll(profileFilter)} className="rounded-md bg-rose-600/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-600">Stop Profile</button>
               </>
             )}
           </div>
@@ -354,7 +357,7 @@ export default function App() {
             })()}
           </div>
         )}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3" role="region" aria-label="Scripts grid">
           {scripts.length === 0 ? (
             <div className="rounded-lg border border-white/10 bg-black/20 p-6 text-slate-400">
               No scripts yet. Use the upcoming editor to add one.

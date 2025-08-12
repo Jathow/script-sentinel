@@ -12,7 +12,8 @@
     "lint": "eslint . --ext .ts,.tsx,.cjs,.cts,.mts",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "release": "standard-version"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
@@ -37,7 +38,8 @@
     "typescript": "^5.4.5",
     "vite": "^5.2.0",
     "vite-plugin-electron": "^0.28.7",
-    "vite-plugin-electron-renderer": "^0.14.5"
+    "vite-plugin-electron-renderer": "^0.14.5",
+    "standard-version": "^9.5.0"
   },
   "dependencies": {
     "electron": "^31.0.2",

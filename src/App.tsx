@@ -1,5 +1,6 @@
 import React from 'react';
 import { LogsDrawer } from './components/LogsDrawer';
+import type { ScriptDefinition, Profile } from './shared/types';
 
 type Status = 'running' | 'starting' | 'stopped' | 'crashed' | 'restarting';
 
@@ -78,11 +79,15 @@ function Card({
 
 export default function App() {
   const [pong, setPong] = React.useState<string>('');
-  const [scripts, setScripts] = React.useState<Array<{ id: string; name: string }>>([]);
+  const [scripts, setScripts] = React.useState<ScriptDefinition[]>([]);
   const [statuses, setStatuses] = React.useState<Record<string, { status: Status; cpu?: number; mem?: number; uptime?: number; healthy?: boolean }>>({});
   const [selected, setSelected] = React.useState<Record<string, boolean>>({});
   const [logsOpen, setLogsOpen] = React.useState(false);
   const [activeLog, setActiveLog] = React.useState<{ id: string; name: string } | null>(null);
+  const [profiles, setProfiles] = React.useState<Profile[]>([]);
+  const [query, setQuery] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState<Status | 'all'>('all');
+  const [profileFilter, setProfileFilter] = React.useState<string>('all');
   React.useEffect(() => {
     window.api
       .ping()
@@ -90,10 +95,12 @@ export default function App() {
       .catch(() => setPong('ipc error'));
     window.api.scripts
       .list()
-      .then((list) => {
-        setScripts(list.map((s) => ({ id: s.id, name: s.name })));
-      })
+      .then((list) => setScripts(list))
       .catch(() => setScripts([]));
+    window.api.profiles
+      .list()
+      .then((p) => setProfiles(p))
+      .catch(() => setProfiles([]));
     window.api.process.snapshots().then((snaps) => {
       if (!snaps) return;
       const next: typeof statuses = {};
@@ -135,6 +142,17 @@ export default function App() {
   };
   const startSelected = () => Promise.all(Object.entries(selected).filter(([, v]) => v).map(([id]) => window.api.process.start(id)));
   const stopAll = () => Promise.all(scripts.map((s) => window.api.process.stop(s.id)));
+
+  const filtered = React.useMemo(() => {
+    return scripts.filter((s) => {
+      const nameOk = !query || s.name.toLowerCase().includes(query.toLowerCase());
+      const statusOk =
+        statusFilter === 'all' || (statuses[s.id]?.status ?? 'stopped') === statusFilter;
+      const profileOk =
+        profileFilter === 'all' || (s.profiles ?? []).includes(profileFilter);
+      return nameOk && statusOk && profileOk;
+    });
+  }, [scripts, query, statusFilter, profileFilter, statuses]);
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b0f14] to-[#0a0e13] text-slate-200">
       <header className="sticky top-0 z-10 border-b border-white/10 bg-black/30 backdrop-blur">
@@ -147,9 +165,41 @@ export default function App() {
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 grid grid-cols-1 items-center gap-3 md:grid-cols-2 lg:grid-cols-3">
           <div className="text-sm text-slate-400">Dark, modern server console theme</div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name"
+              className="w-full rounded-md border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as Status | 'all')}
+              className="rounded-md border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            >
+              <option value="all">All statuses</option>
+              <option value="running">Running</option>
+              <option value="starting">Starting</option>
+              <option value="restarting">Restarting</option>
+              <option value="stopped">Stopped</option>
+              <option value="crashed">Crashed</option>
+            </select>
+            <select
+              value={profileFilter}
+              onChange={(e) => setProfileFilter(e.target.value)}
+              className="rounded-md border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            >
+              <option value="all">All profiles</option>
+              {profiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex justify-end gap-2">
             <button onClick={startSelected} className="rounded-md bg-emerald-500/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500">Start Selected</button>
             <button onClick={stopAll} className="rounded-md bg-rose-500/90 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-500">Stop All</button>
           </div>
@@ -160,7 +210,7 @@ export default function App() {
               No scripts yet. Use the upcoming editor to add one.
             </div>
           ) : (
-            scripts.map((s) => (
+            filtered.map((s) => (
               <Card
                 key={s.id}
                 title={s.name}

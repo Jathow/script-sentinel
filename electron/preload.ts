@@ -80,6 +80,18 @@ contextBridge.exposeInMainWorld('api', {
       return () => ipcRenderer.off('updates:event', handler);
     },
   },
+  security: {
+    onPermissionWarn: (
+      cb: (evt: { scriptId: string; name: string; reason: string }) => void,
+    ) => {
+      const handler = (
+        _: unknown,
+        evt: { scriptId: string; name: string; reason: string },
+      ) => cb(evt);
+      ipcRenderer.on('security:permission:warn', handler);
+      return () => ipcRenderer.off('security:permission:warn', handler);
+    },
+  },
 });
 
 declare global {
@@ -113,6 +125,11 @@ declare global {
         download: () => Promise<{ ok: boolean; error?: string }>;
         quitAndInstall: () => Promise<void>;
         onEvent: (cb: (evt: { type: string; info?: unknown; message?: string }) => void) => () => void;
+      };
+      security: {
+        onPermissionWarn: (
+          cb: (evt: { scriptId: string; name: string; reason: string }) => void,
+        ) => () => void;
       };
       process: {
         start: (id: string) => Promise<void>;

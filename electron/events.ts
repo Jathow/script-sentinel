@@ -12,6 +12,7 @@ export type MainEventMap = {
   'process:log:event': { scriptId: string; text: string };
   'process:restart:event': { scriptId: string; attempt: number };
   'updates:event': UpdatesEvent;
+  'security:permission:warn': { scriptId: string; name: string; reason: string };
 };
 
 export class TypedEventBus {

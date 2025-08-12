@@ -209,6 +209,20 @@ export class ProcessManager {
 
       child.on('spawn', () => {
         this.setStatus(id, 'running');
+        // Heuristic permission warning: very common admin-needed commands
+        if (process.platform === 'win32') {
+          const needsAdmin = /choco|npm\s+install|winget|sc\s+|net\s+(start|stop|user|localgroup)/i.test(
+            `${script.command} ${(script.args ?? []).join(' ')}`,
+          );
+          if (needsAdmin) {
+            const { eventBus } = require('./events');
+            eventBus.send('security:permission:warn', {
+              scriptId: id,
+              name: script.name,
+              reason: 'This command may require elevated privileges to succeed.',
+            });
+          }
+        }
       });
       child.on('error', (err) => {
         this.writeLog(id, `\n[error] ${err.message}\n`);

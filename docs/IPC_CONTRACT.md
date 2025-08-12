@@ -53,6 +53,8 @@ Events:
 Additional event:
 - process:restart:event (payload: { scriptId: string; attempt: number })
   - Emitted before an automatic restart attempt
+- security:permission:warn (payload: { scriptId: string; name: string; reason: string })
+  - Emitted when a command likely requires elevated privileges
 
 ## Updates
 - updates:check → Promise<{ ok: boolean; error?: string }>

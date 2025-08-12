@@ -3,6 +3,7 @@ import { LogsDrawer } from './components/LogsDrawer';
 import type { ScriptDefinition, Profile } from './shared/types';
 import { ScriptEditorModal } from './components/ScriptEditorModal';
 import { ProfilesSidebar } from './components/ProfilesSidebar';
+import { Toasts, useToasts } from './components/Toasts';
 
 type Status = 'running' | 'starting' | 'stopped' | 'crashed' | 'restarting';
 
@@ -115,6 +116,7 @@ export default function App() {
   const [profileFilter, setProfileFilter] = React.useState<string>('all');
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ScriptDefinition | null>(null);
+  const { toasts, add: addToast, remove: removeToast } = useToasts();
   React.useEffect(() => {
     window.api
       .ping()
@@ -157,6 +159,14 @@ export default function App() {
           nextRestartDelayMs: (snap as { nextRestartDelayMs?: number }).nextRestartDelayMs,
         },
       }));
+      if ((snap.status as Status) === 'crashed') {
+        const s = scripts.find((x) => x.id === snap.scriptId);
+        addToast({
+          title: 'Script crashed',
+          body: `${s?.name ?? snap.scriptId} exited with code ${snap.lastExitCode ?? 'unknown'}`,
+          kind: 'error',
+        });
+      }
     });
     return () => {
       off?.();
@@ -340,6 +350,7 @@ export default function App() {
         onSaved={onSaved}
         profiles={profiles}
       />
+      <Toasts toasts={toasts} onClose={removeToast} />
     </div>
   );
 }

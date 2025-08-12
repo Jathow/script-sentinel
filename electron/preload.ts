@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { ScriptDefinition, Profile, AppSettings } from '../src/shared/types';
+import type { ScriptDefinition, Profile, AppSettings, RuntimeStateSnapshot } from '../src/shared/types';
 
 contextBridge.exposeInMainWorld('api', {
   ping: () => ipcRenderer.invoke('process:ping') as Promise<string>,
@@ -25,10 +25,12 @@ contextBridge.exposeInMainWorld('api', {
     start: (id: string) => ipcRenderer.invoke('process:start', id) as Promise<void>,
     stop: (id: string) => ipcRenderer.invoke('process:stop', id) as Promise<void>,
     restart: (id: string) => ipcRenderer.invoke('process:restart', id) as Promise<void>,
-    snapshot: (id: string) => ipcRenderer.invoke('process:snapshot', id),
-    snapshots: () => ipcRenderer.invoke('process:snapshots'),
-    onStatus: (cb: (snap: unknown) => void) => {
-      const handler = (_: unknown, snap: unknown) => cb(snap);
+    snapshot: (id: string) =>
+      ipcRenderer.invoke('process:snapshot', id) as Promise<RuntimeStateSnapshot | undefined>,
+    snapshots: () =>
+      ipcRenderer.invoke('process:snapshots') as Promise<RuntimeStateSnapshot[] | undefined>,
+    onStatus: (cb: (snap: RuntimeStateSnapshot) => void) => {
+      const handler = (_: unknown, snap: RuntimeStateSnapshot) => cb(snap);
       ipcRenderer.on('process:status:event', handler);
       return () => ipcRenderer.off('process:status:event', handler);
     },
@@ -63,9 +65,9 @@ declare global {
         start: (id: string) => Promise<void>;
         stop: (id: string) => Promise<void>;
         restart: (id: string) => Promise<void>;
-        snapshot: (id: string) => Promise<unknown>;
-        snapshots: () => Promise<unknown>;
-        onStatus: (cb: (snap: unknown) => void) => () => void;
+        snapshot: (id: string) => Promise<RuntimeStateSnapshot | undefined>;
+        snapshots: () => Promise<RuntimeStateSnapshot[] | undefined>;
+        onStatus: (cb: (snap: RuntimeStateSnapshot) => void) => () => void;
         onLog: (cb: (evt: { scriptId: string; text: string }) => void) => () => void;
       };
     };

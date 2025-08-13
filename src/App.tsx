@@ -360,9 +360,8 @@ export default function App() {
           }}
         />
         <div className="min-w-0 flex-1">
-        <div className="mb-6 grid grid-cols-1 items-center gap-3 md:grid-cols-2 lg:grid-cols-3" aria-label="Toolbar" role="region">
-          <div className="text-sm text-slate-400">Dark, modern server console theme</div>
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="mb-6 grid grid-cols-1 items-center gap-3 md:grid-cols-2" aria-label="Toolbar" role="region">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <input
               ref={searchInputRef}
               value={query}
@@ -398,7 +397,7 @@ export default function App() {
               ))}
             </select>
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <button aria-label="Add script" onClick={openCreate} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Add Script</button>
             <button aria-label="Select all filtered" onClick={() => setSelected((prev) => { const next = { ...prev }; for (const s of filtered) next[s.id] = true; return next; })} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Select All</button>
             <button aria-label="Clear selection" onClick={() => setSelected({})} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Clear</button>

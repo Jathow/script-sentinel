@@ -119,7 +119,7 @@ export function ScriptCard({
 
   return (
     <div
-      className={`group relative rounded-xl border ${selected ? 'border-emerald-400/40' : 'border-white/10'} bg-gradient-to-b from-white/5 to-transparent p-4 backdrop-blur transition hover:border-white/20`}
+      className={`group relative flex h-full flex-col rounded-xl border ${selected ? 'border-emerald-400/40' : 'border-white/10'} bg-gradient-to-b from-white/5 to-transparent p-4 backdrop-blur transition hover:border-white/20`}
       role="region"
       aria-label={`${title} card`}
     >
@@ -131,7 +131,7 @@ export function ScriptCard({
         <span className={`status-led ${statusColor} ${status === 'running' ? 'animate-pulse-glow' : ''}`} />
       </div>
       <div className="mt-3 rounded-lg bg-black/30 ring-1 ring-white/5">
-        <div className="grid grid-cols-4 gap-3 px-3 py-2 text-xs text-slate-400">
+        <div className="grid grid-cols-3 gap-3 px-3 py-2 text-xs text-slate-400 sm:grid-cols-4">
           <div>
             <div className="text-slate-300">CPU</div>
             <div>{cpu ? cpu.toFixed(0) + '%' : '—'}</div>
@@ -164,7 +164,7 @@ export function ScriptCard({
           </div>
         </div>
       </div>
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         <button
           onClick={handleStart}
           disabled={!isStopped || pendingStart || pendingStop || pendingKill}
@@ -184,7 +184,7 @@ export function ScriptCard({
         <button onClick={onEdit} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Edit</button>
         <button onClick={onLogs} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Logs</button>
         <button onClick={handleKill} disabled={isStopped || pendingKill || pendingStart || pendingStop} aria-busy={pendingKill} title="Kill process tree" className="rounded-md bg-rose-600/80 px-3 py-1.5 text-sm text-white hover:bg-rose-600 disabled:opacity-50">{pendingKill ? 'Killing…' : 'Kill'}</button>
-        <button onClick={handleDelete} disabled={pendingDelete} aria-busy={pendingDelete} title="Delete script" className="ml-auto rounded-md bg-rose-700/80 px-3 py-1.5 text-sm text-white hover:bg-rose-700 disabled:opacity-50">{pendingDelete ? 'Deleting…' : 'Delete'}</button>
+        <button onClick={handleDelete} disabled={pendingDelete} aria-busy={pendingDelete} title="Delete script" className="rounded-md bg-rose-700/80 px-3 py-1.5 text-sm text-white hover:bg-rose-700 disabled:opacity-50">{pendingDelete ? 'Deleting…' : 'Delete'}</button>
       </div>
     </div>
   );

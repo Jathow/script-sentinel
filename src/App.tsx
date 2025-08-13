@@ -110,7 +110,7 @@ function Card({
 export default function App() {
   const [pong, setPong] = React.useState<string>('');
   const [scripts, setScripts] = React.useState<ScriptDefinition[]>([]);
-  const [statuses, setStatuses] = React.useState<Record<string, { status: Status; cpu?: number; mem?: number; uptime?: number; healthy?: boolean; retries?: number; lastExitCode?: number | null; backoffMs?: number; nextRestartDelayMs?: number }>>({});
+  const [statuses, setStatuses] = React.useState<Record<string, { status: Status; pid?: number; cpu?: number; mem?: number; uptime?: number; healthy?: boolean; retries?: number; lastExitCode?: number | null; backoffMs?: number; nextRestartDelayMs?: number }>>({});
   const [selected, setSelected] = React.useState<Record<string, boolean>>({});
   const [logsOpen, setLogsOpen] = React.useState(false);
   const [activeLog, setActiveLog] = React.useState<{ id: string; name: string } | null>(null);
@@ -146,8 +146,9 @@ export default function App() {
       if (!snaps) return;
       const next: typeof statuses = {};
       for (const s of snaps) {
-        next[s.scriptId] = {
+         next[s.scriptId] = {
           status: (s.status as Status) ?? 'stopped',
+           pid: s.pid ?? undefined,
           cpu: s.cpuPercent,
           mem: s.memMB,
           uptime: s.uptimeMs,
@@ -161,6 +162,7 @@ export default function App() {
         ...prev,
         [snap.scriptId]: {
           status: (snap.status as Status) ?? 'stopped',
+           pid: snap.pid ?? undefined,
           cpu: snap.cpuPercent,
           mem: snap.memMB,
           uptime: snap.uptimeMs,
@@ -416,6 +418,7 @@ export default function App() {
                 key={s.id}
                 title={s.name}
                 status={statuses[s.id]?.status ?? 'stopped'}
+                pid={statuses[s.id]?.pid}
                 cpu={statuses[s.id]?.cpu}
                 mem={statuses[s.id]?.mem}
                 uptime={statuses[s.id]?.uptime}

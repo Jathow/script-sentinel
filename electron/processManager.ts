@@ -14,6 +14,7 @@ import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
 import { detectSecretValues, maskTextWithSecrets } from './secrets';
+import { logger } from './appLogger';
 import { eventBus } from './events';
 import { logManager } from './logger';
 
@@ -192,6 +193,7 @@ export class ProcessManager {
         windowsHide: true,
         shell: false,
       });
+      logger.info('Spawned script', { id, name: script.name, command: script.command, args: script.args, cwd: script.cwd });
       p!.child = child;
       p!.stopping = false;
       // detect secrets once per run
@@ -208,6 +210,7 @@ export class ProcessManager {
 
       child.on('spawn', () => {
         this.setStatus(id, 'running');
+        logger.info('Process spawned', { id, pid: child.pid });
         // Heuristic permission warning: very common admin-needed commands
         if (process.platform === 'win32') {
           const needsAdmin = /choco|npm\s+install|winget|sc\s+|net\s+(start|stop|user|localgroup)/i.test(
@@ -224,10 +227,12 @@ export class ProcessManager {
       });
       child.on('error', (err) => {
         this.writeLog(id, `\n[error] ${err.message}\n`);
+        logger.error('Process error', { id, message: err.message });
       });
       child.on('exit', async (code) => {
         p!.lastExitCode = code ?? null;
         p!.child = undefined;
+        logger.info('Process exited', { id, code });
         const wasStopping = p!.stopping === true;
         const next: RuntimeStatus = code === 0 ? 'stopped' : 'crashed';
         this.setStatus(id, next);

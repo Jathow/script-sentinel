@@ -13,6 +13,7 @@ export interface ScriptCardProps {
   retries?: number;
   lastExitCode?: number | null;
   nextRestartDelayMs?: number;
+  pid?: number;
   cpu?: number;
   mem?: number;
   uptime?: number;
@@ -40,6 +41,7 @@ export function ScriptCard({
   retries,
   lastExitCode,
   nextRestartDelayMs,
+  pid,
   cpu,
   mem,
   uptime,
@@ -114,7 +116,7 @@ export function ScriptCard({
         <span className={`status-led ${statusColor} ${status === 'running' ? 'animate-pulse-glow' : ''}`} />
       </div>
       <div className="mt-3 rounded-lg bg-black/30 ring-1 ring-white/5">
-        <div className="grid grid-cols-3 gap-3 px-3 py-2 text-xs text-slate-400">
+        <div className="grid grid-cols-4 gap-3 px-3 py-2 text-xs text-slate-400">
           <div>
             <div className="text-slate-300">CPU</div>
             <div>{cpu ? cpu.toFixed(0) + '%' : '—'}</div>
@@ -126,6 +128,10 @@ export function ScriptCard({
           <div>
             <div className="text-slate-300">Uptime</div>
             <div>{formatUptime(uptime)}</div>
+          </div>
+          <div>
+            <div className="text-slate-300">PID</div>
+            <div>{pid ?? '—'}</div>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3 px-3 pb-3 text-xs text-slate-400">

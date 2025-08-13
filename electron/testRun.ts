@@ -24,9 +24,16 @@ export function testRun(input: TestRunInput): Promise<TestRunResult> {
     let settled = false;
 
     try {
-      const child = spawn(input.command, input.args ?? [], {
+      const args = input.args ?? [];
+      const baseCmd = require('node:path').basename(input.command).toLowerCase();
+      const isPython = baseCmd === 'python' || baseCmd === 'python.exe' || baseCmd === 'python3' || baseCmd === 'python3.exe' || baseCmd === 'py' || baseCmd === 'py.exe';
+      const envMerged: NodeJS.ProcessEnv = { ...process.env, ...(input.env ?? {}) };
+      if (isPython && envMerged.PYTHONUNBUFFERED === undefined && !args.includes('-u')) {
+        envMerged.PYTHONUNBUFFERED = '1';
+      }
+      const child = spawn(input.command, args, {
         cwd: input.cwd ?? process.cwd(),
-        env: { ...process.env, ...(input.env ?? {}) },
+        env: envMerged,
         windowsHide: true,
         shell: false,
       });

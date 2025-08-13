@@ -187,9 +187,16 @@ export class ProcessManager {
     const spawnOnce = () => {
       this.setStatus(id, 'starting');
 
-      const child = spawn(script.command, script.args ?? [], {
+      const args = script.args ?? [];
+      const baseCmd = path.basename(script.command).toLowerCase();
+      const isPython = baseCmd === 'python' || baseCmd === 'python.exe' || baseCmd === 'python3' || baseCmd === 'python3.exe' || baseCmd === 'py' || baseCmd === 'py.exe';
+      const envMerged: NodeJS.ProcessEnv = { ...process.env, ...(script.env ?? {}) };
+      if (isPython && envMerged.PYTHONUNBUFFERED === undefined && !args.includes('-u')) {
+        envMerged.PYTHONUNBUFFERED = '1';
+      }
+      const child = spawn(script.command, args, {
         cwd: script.cwd ?? process.cwd(),
-        env: { ...process.env, ...(script.env ?? {}) },
+        env: envMerged,
         windowsHide: true,
         shell: false,
       });

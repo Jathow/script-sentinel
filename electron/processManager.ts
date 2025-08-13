@@ -14,6 +14,8 @@ import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
 import { detectSecretValues, maskTextWithSecrets } from './secrets';
+import { eventBus } from './events';
+import { logManager } from './logger';
 
 interface ManagedProc {
   child?: ChildProcessWithoutNullStreams;
@@ -101,7 +103,6 @@ export class ProcessManager {
   private emitStatus(scriptId: string): void {
     const snap = this.snapshot(scriptId);
     if (snap) {
-      const { eventBus } = require('./events');
       eventBus.send('process:status:event', snap);
     }
   }
@@ -122,9 +123,7 @@ export class ProcessManager {
     // Mask secrets before writing
     const masked = maskTextWithSecrets(text, managed.secretValues ?? []);
     // Write via rotating log manager
-    const { logManager } = require('./logger');
     logManager.write(scriptId, masked);
-    const { eventBus } = require('./events');
     eventBus.send('process:log:event', { scriptId, text: masked });
   }
 
@@ -215,7 +214,6 @@ export class ProcessManager {
             `${script.command} ${(script.args ?? []).join(' ')}`,
           );
           if (needsAdmin) {
-            const { eventBus } = require('./events');
             eventBus.send('security:permission:warn', {
               scriptId: id,
               name: script.name,
@@ -248,7 +246,6 @@ export class ProcessManager {
           n.show();
         }
         // Close log stream between runs
-        const { logManager } = require('./logger');
         logManager.close(id);
 
         if (!wasStopping && (script.autoRestart || script.restartPolicy === 'always' || (script.restartPolicy === 'on-crash' && code !== 0))) {
@@ -276,7 +273,6 @@ export class ProcessManager {
             }
             (p as unknown as { backoffAbort?: AbortController }).backoffAbort = undefined;
             p!.retries += 1;
-            const { eventBus } = require('./events');
             eventBus.send('process:restart:event', { scriptId: id, attempt: p!.retries });
             await this.start(id);
             p!.nextRestartAt = undefined;

@@ -29,8 +29,16 @@ export function testRun(input: TestRunInput): Promise<TestRunResult> {
       const baseCmd = path.basename(input.command).toLowerCase();
       const isPython = baseCmd === 'python' || baseCmd === 'python.exe' || baseCmd === 'python3' || baseCmd === 'python3.exe' || baseCmd === 'py' || baseCmd === 'py.exe';
       const envMerged: NodeJS.ProcessEnv = { ...process.env, ...(input.env ?? {}) };
-      if (isPython && envMerged.PYTHONUNBUFFERED === undefined && !args.includes('-u')) {
-        envMerged.PYTHONUNBUFFERED = '1';
+      if (isPython) {
+        if (envMerged.PYTHONUNBUFFERED === undefined && !args.includes('-u')) {
+          envMerged.PYTHONUNBUFFERED = '1';
+        }
+        if (envMerged.PYTHONUTF8 === undefined) {
+          envMerged.PYTHONUTF8 = '1';
+        }
+        if (envMerged.PYTHONIOENCODING === undefined) {
+          envMerged.PYTHONIOENCODING = 'utf-8';
+        }
       }
       const child = spawn(input.command, args, {
         cwd: input.cwd ?? process.cwd(),

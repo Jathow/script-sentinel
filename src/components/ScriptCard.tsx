@@ -9,6 +9,7 @@ export interface ScriptCardProps {
   onStop?: () => void;
   onLogs?: () => void;
   onKill?: () => void;
+  onEdit?: () => void;
   retries?: number;
   lastExitCode?: number | null;
   nextRestartDelayMs?: number;
@@ -35,6 +36,7 @@ export function ScriptCard({
   onStop,
   onLogs,
   onKill,
+  onEdit,
   retries,
   lastExitCode,
   nextRestartDelayMs,
@@ -99,6 +101,7 @@ export function ScriptCard({
       <div className="mt-4 flex gap-2">
         <button onClick={onStart} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Start</button>
         <button onClick={onStop} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Stop</button>
+        <button onClick={onEdit} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Edit</button>
         <button onClick={onLogs} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Logs</button>
         <button onClick={onKill} title="Kill process tree" className="rounded-md bg-rose-600/80 px-3 py-1.5 text-sm text-white hover:bg-rose-600">Kill</button>
       </div>

@@ -204,11 +204,11 @@ export default function App() {
     setEditing(null);
     setEditorOpen(true);
   };
-  // const openEdit = (id: string) => {
-  //   const s = scripts.find((x) => x.id === id) ?? null;
-  //   setEditing(s);
-  //   setEditorOpen(true);
-  // };
+  const openEdit = (id: string) => {
+    const s = scripts.find((x) => x.id === id) ?? null;
+    setEditing(s);
+    setEditorOpen(true);
+  };
   const onSaved = (saved: ScriptDefinition) => {
     setScripts((prev) => {
       const idx = prev.findIndex((p) => p.id === saved.id);
@@ -299,13 +299,13 @@ export default function App() {
           activeProfileId={profileFilter}
           onSelect={(id) => setProfileFilter(id)}
           onCreate={async (name) => {
-            const created = await (window.api?.profiles.upsert({ id: crypto.randomUUID(), name, scriptIds: [], autoStartOnLogin: false }) as Promise<ScriptDefinition>);
+            const created = await (window.api?.profiles.upsert({ id: crypto.randomUUID(), name, scriptIds: [], autoStartOnLogin: false }) as Promise<Profile>);
             setProfiles((prev) => [...prev, created]);
           }}
           onRename={async (id, name) => {
             const p = profiles.find((x) => x.id === id);
             if (!p) return;
-            const updated = await (window.api?.profiles.upsert({ ...p, name }) as Promise<ScriptDefinition>);
+            const updated = await (window.api?.profiles.upsert({ ...p, name }) as Promise<Profile>);
             setProfiles((prev) => prev.map((x) => (x.id === id ? updated : x)));
           }}
           onDelete={async (id) => {
@@ -315,7 +315,7 @@ export default function App() {
           onToggleAutostart={async (id, value) => {
             const p = profiles.find((x) => x.id === id);
             if (!p) return;
-            const updated = await (window.api?.profiles.upsert({ ...p, autoStartOnLogin: value }) as Promise<ScriptDefinition>);
+            const updated = await (window.api?.profiles.upsert({ ...p, autoStartOnLogin: value }) as Promise<Profile>);
             setProfiles((prev) => prev.map((x) => (x.id === id ? updated : x)));
           }}
         />
@@ -398,6 +398,7 @@ export default function App() {
                 onStart={() => startOne(s.id)}
                 onStop={() => stopOne(s.id)}
                 onKill={() => killOne(s.id)}
+                onEdit={() => openEdit(s.id)}
                 selected={!!selected[s.id]}
                 onToggle={() => toggleSelect(s.id)}
                 onLogs={() => openLogs(s.id)}

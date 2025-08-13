@@ -248,6 +248,17 @@ export default function App() {
     });
   };
 
+  const deleteOne = async (id: string) => {
+    try {
+      await window.api?.scripts.delete(id);
+      setScripts((prev) => prev.filter((s) => s.id !== id));
+      addToast({ title: 'Deleted', body: id, kind: 'info' });
+    } catch (e) {
+      addToast({ title: 'Delete failed', body: (e as Error)?.message ?? String(e), kind: 'error' });
+      throw e;
+    }
+  };
+
   const filtered = React.useMemo(() => {
     return scripts.filter((s) => {
       const nameOk = !query || s.name.toLowerCase().includes(query.toLowerCase());
@@ -429,6 +440,7 @@ export default function App() {
                 onStop={() => stopOne(s.id)}
                 onKill={() => killOne(s.id)}
                 onEdit={() => openEdit(s.id)}
+                onDelete={() => deleteOne(s.id)}
                 selected={!!selected[s.id]}
                 onToggle={() => toggleSelect(s.id)}
                 onLogs={() => openLogs(s.id)}

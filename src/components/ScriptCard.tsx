@@ -10,6 +10,7 @@ export interface ScriptCardProps {
   onLogs?: () => void;
   onKill?: () => void | Promise<void>;
   onEdit?: () => void;
+  onDelete?: () => void | Promise<void>;
   retries?: number;
   lastExitCode?: number | null;
   nextRestartDelayMs?: number;
@@ -38,6 +39,7 @@ export function ScriptCard({
   onLogs,
   onKill,
   onEdit,
+  onDelete,
   retries,
   lastExitCode,
   nextRestartDelayMs,
@@ -64,6 +66,7 @@ export function ScriptCard({
   const [pendingStart, setPendingStart] = React.useState(false);
   const [pendingStop, setPendingStop] = React.useState(false);
   const [pendingKill, setPendingKill] = React.useState(false);
+  const [pendingDelete, setPendingDelete] = React.useState(false);
   const primaryLabel = isStarting
     ? 'Starting…'
     : isRestarting
@@ -99,6 +102,18 @@ export function ScriptCard({
       await (onKill() as Promise<void>);
     } finally {
       setPendingKill(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!onDelete || pendingDelete) return;
+    const ok = window.confirm('Delete this script? This cannot be undone.');
+    if (!ok) return;
+    try {
+      setPendingDelete(true);
+      await (onDelete() as Promise<void>);
+    } finally {
+      setPendingDelete(false);
     }
   };
 
@@ -169,6 +184,7 @@ export function ScriptCard({
         <button onClick={onEdit} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Edit</button>
         <button onClick={onLogs} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Logs</button>
         <button onClick={handleKill} disabled={isStopped || pendingKill || pendingStart || pendingStop} aria-busy={pendingKill} title="Kill process tree" className="rounded-md bg-rose-600/80 px-3 py-1.5 text-sm text-white hover:bg-rose-600 disabled:opacity-50">{pendingKill ? 'Killing…' : 'Kill'}</button>
+        <button onClick={handleDelete} disabled={pendingDelete} aria-busy={pendingDelete} title="Delete script" className="ml-auto rounded-md bg-rose-700/80 px-3 py-1.5 text-sm text-white hover:bg-rose-700 disabled:opacity-50">{pendingDelete ? 'Deleting…' : 'Delete'}</button>
       </div>
     </div>
   );

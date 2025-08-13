@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import path from 'node:path';
 
 export interface TestRunInput {
   command: string;
@@ -25,7 +26,7 @@ export function testRun(input: TestRunInput): Promise<TestRunResult> {
 
     try {
       const args = input.args ?? [];
-      const baseCmd = require('node:path').basename(input.command).toLowerCase();
+      const baseCmd = path.basename(input.command).toLowerCase();
       const isPython = baseCmd === 'python' || baseCmd === 'python.exe' || baseCmd === 'python3' || baseCmd === 'python3.exe' || baseCmd === 'py' || baseCmd === 'py.exe';
       const envMerged: NodeJS.ProcessEnv = { ...process.env, ...(input.env ?? {}) };
       if (isPython && envMerged.PYTHONUNBUFFERED === undefined && !args.includes('-u')) {

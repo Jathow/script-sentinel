@@ -190,16 +190,43 @@ export default function App() {
   }, []);
 
   const toggleSelect = (id: string) => setSelected((p) => ({ ...p, [id]: !p[id] }));
-  const startOne = (id: string) => window.api?.process.start(id) as unknown as Promise<void>;
-  const stopOne = (id: string) => window.api?.process.stop(id) as unknown as Promise<void>;
-  const killOne = (id: string) => window.api?.process.killTree(id) as unknown as Promise<void>;
+  const startOne = async (id: string) => {
+    try {
+      await (window.api?.process.start(id) as unknown as Promise<void>);
+      const s = scripts.find((x) => x.id === id);
+      addToast({ title: 'Started', body: s?.name ?? id, kind: 'success' });
+    } catch (e) {
+      addToast({ title: 'Start failed', body: (e as Error)?.message ?? String(e), kind: 'error' });
+      throw e;
+    }
+  };
+  const stopOne = async (id: string) => {
+    try {
+      await (window.api?.process.stop(id) as unknown as Promise<void>);
+      const s = scripts.find((x) => x.id === id);
+      addToast({ title: 'Stopped', body: s?.name ?? id, kind: 'info' });
+    } catch (e) {
+      addToast({ title: 'Stop failed', body: (e as Error)?.message ?? String(e), kind: 'error' });
+      throw e;
+    }
+  };
+  const killOne = async (id: string) => {
+    try {
+      await (window.api?.process.killTree(id) as unknown as Promise<void>);
+      const s = scripts.find((x) => x.id === id);
+      addToast({ title: 'Killed', body: s?.name ?? id, kind: 'info' });
+    } catch (e) {
+      addToast({ title: 'Kill failed', body: (e as Error)?.message ?? String(e), kind: 'error' });
+      throw e;
+    }
+  };
   const openLogs = (id: string) => {
     const s = scripts.find((x) => x.id === id);
     setActiveLog(s ? { id: s.id, name: s.name } : { id, name: id });
     setLogsOpen(true);
   };
-  const startSelected = () => Promise.all(Object.entries(selected).filter(([, v]) => v).map(([id]) => window.api?.process.start(id) as unknown as Promise<void>));
-  const stopAll = () => Promise.all(scripts.map((s) => window.api?.process.stop(s.id) as unknown as Promise<void>));
+  const startSelected = () => Promise.all(Object.entries(selected).filter(([, v]) => v).map(([id]) => startOne(id)));
+  const stopAll = () => Promise.all(scripts.map((s) => stopOne(s.id)));
   const openCreate = () => {
     setEditing(null);
     setEditorOpen(true);

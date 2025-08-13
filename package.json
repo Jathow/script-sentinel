@@ -6,6 +6,7 @@
   "type": "module",
   "main": "dist-electron/main.mjs",
   "author": "Justin",
+  "license": "LicenseRef-NC-Portfolio",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

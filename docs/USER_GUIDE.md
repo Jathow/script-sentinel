@@ -49,6 +49,65 @@ Minimal example JSON:
 - Port: Healthy if a TCP port (e.g., 3000) is open
 - URL: Healthy if HTTP(S) endpoint responds 2xx
 
+## Script Settings Reference
+
+The script editor corresponds to the following shape (subset of `src/shared/types.ts`):
+
+```ts
+interface ScriptDefinition {
+  name: string;
+  command: string;      // e.g., node, python, pwsh, or absolute path
+  args?: string[];      // space-separated in the UI; stored as an array
+  cwd?: string;         // working directory
+  env?: Record<string, string>; // one KEY=VALUE per line in the UI
+  autoStart?: boolean;
+  autoRestart?: boolean;
+  restartPolicy?: 'always' | 'on-crash' | 'never';
+  backoffMs?: number;   // base backoff delay in ms
+  maxRetries?: number;  // -1 for unlimited
+  healthCheck?: { port?: number; url?: string };
+  profiles?: string[];  // associated profile ids
+}
+```
+
+### Field guidance
+- **Command**: must be resolvable on PATH or an absolute path. Use `node`, `python`, `pwsh`, etc.
+- **Args**: space separated. Quoting works like your shell. Example: `-e "setInterval(()=>console.log('beat'),2000)"`.
+- **Environment**: one per line, e.g. `API_KEY=abc123`. Lines without `=` are ignored.
+- **Backoff/Max Retries**: controls restart behavior when policy is `always` or `on-crash`. Use `-1` for unlimited retries.
+- **Health checks**: either TCP `port` or HTTP(S) `url` marks the script healthy when available.
+
+### Worked examples
+
+Python worker with a virtualenv and env vars:
+
+```
+Name: Price Worker
+Command: C:\\Users\\me\\venvs\\proj\\Scripts\\python.exe
+Args: worker.py --queue prices
+Working Directory: C:\\Users\\me\\proj
+Environment:
+  API_URL=https://api.example.com
+  TOKEN=dev-secret
+Restart Policy: On Crash
+Backoff (ms): 2000
+Max Retries: -1
+Health URL: http://localhost:8080/healthz
+```
+
+Node service with port health:
+
+```
+Name: Web
+Command: node
+Args: server.js
+Working Directory: C:\\Users\\me\\web
+Restart Policy: Always
+Backoff (ms): 1000
+Max Retries: -1
+Health Port: 3000
+```
+
 ## Troubleshooting
 - Ensure commands (`node`/`python`/`pwsh`) are in PATH or use full paths
 - Use Kill to terminate process tree for stubborn processes

@@ -5,10 +5,10 @@ export type Status = 'running' | 'starting' | 'stopped' | 'crashed' | 'restartin
 export interface ScriptCardProps {
   title: string;
   status: Status;
-  onStart?: () => void;
-  onStop?: () => void;
+  onStart?: () => void | Promise<void>;
+  onStop?: () => void | Promise<void>;
   onLogs?: () => void;
-  onKill?: () => void;
+  onKill?: () => void | Promise<void>;
   onEdit?: () => void;
   retries?: number;
   lastExitCode?: number | null;
@@ -59,13 +59,46 @@ export function ScriptCard({
   const isRunning = status === 'running';
   const isStarting = status === 'starting';
   const isRestarting = status === 'restarting';
+  const [pendingStart, setPendingStart] = React.useState(false);
+  const [pendingStop, setPendingStop] = React.useState(false);
+  const [pendingKill, setPendingKill] = React.useState(false);
   const primaryLabel = isStarting
     ? 'Starting…'
     : isRestarting
     ? 'Restarting…'
-    : isRunning
+    : isRunning || pendingStart
     ? 'Running'
     : 'Start';
+
+  const handleStart = async () => {
+    if (!onStart || !isStopped || pendingStart) return;
+    try {
+      setPendingStart(true);
+      await (onStart() as Promise<void>);
+    } finally {
+      setPendingStart(false);
+    }
+  };
+
+  const handleStop = async () => {
+    if (!onStop || isStopped || pendingStop) return;
+    try {
+      setPendingStop(true);
+      await (onStop() as Promise<void>);
+    } finally {
+      setPendingStop(false);
+    }
+  };
+
+  const handleKill = async () => {
+    if (!onKill || isStopped || pendingKill) return;
+    try {
+      setPendingKill(true);
+      await (onKill() as Promise<void>);
+    } finally {
+      setPendingKill(false);
+    }
+  };
 
   return (
     <div
@@ -112,23 +145,24 @@ export function ScriptCard({
       </div>
       <div className="mt-4 flex gap-2">
         <button
-          onClick={isStopped ? onStart : undefined}
-          disabled={!isStopped}
-          aria-busy={isStarting || isRestarting}
+          onClick={handleStart}
+          disabled={!isStopped || pendingStart || pendingStop || pendingKill}
+          aria-busy={isStarting || isRestarting || pendingStart}
           className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 disabled:opacity-50"
         >
           {primaryLabel}
         </button>
         <button
-          onClick={onStop}
-          disabled={isStopped}
+          onClick={handleStop}
+          disabled={isStopped || pendingStop || pendingStart || pendingKill}
+          aria-busy={pendingStop}
           className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 disabled:opacity-50"
         >
-          Stop
+          {pendingStop ? 'Stopping…' : 'Stop'}
         </button>
         <button onClick={onEdit} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Edit</button>
         <button onClick={onLogs} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Logs</button>
-        <button onClick={onKill} title="Kill process tree" className="rounded-md bg-rose-600/80 px-3 py-1.5 text-sm text-white hover:bg-rose-600">Kill</button>
+        <button onClick={handleKill} disabled={isStopped || pendingKill || pendingStart || pendingStop} aria-busy={pendingKill} title="Kill process tree" className="rounded-md bg-rose-600/80 px-3 py-1.5 text-sm text-white hover:bg-rose-600 disabled:opacity-50">{pendingKill ? 'Killing…' : 'Kill'}</button>
       </div>
     </div>
   );

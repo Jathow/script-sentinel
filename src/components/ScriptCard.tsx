@@ -55,6 +55,18 @@ export function ScriptCard({
       ? 'bg-amber-400 shadow-amber-500/40'
       : 'bg-rose-500 shadow-rose-500/40';
 
+  const isStopped = status === 'stopped';
+  const isRunning = status === 'running';
+  const isStarting = status === 'starting';
+  const isRestarting = status === 'restarting';
+  const primaryLabel = isStarting
+    ? 'Starting…'
+    : isRestarting
+    ? 'Restarting…'
+    : isRunning
+    ? 'Running'
+    : 'Start';
+
   return (
     <div
       className={`group relative rounded-xl border ${selected ? 'border-emerald-400/40' : 'border-white/10'} bg-gradient-to-b from-white/5 to-transparent p-4 backdrop-blur transition hover:border-white/20`}
@@ -99,8 +111,21 @@ export function ScriptCard({
         </div>
       </div>
       <div className="mt-4 flex gap-2">
-        <button onClick={onStart} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Start</button>
-        <button onClick={onStop} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Stop</button>
+        <button
+          onClick={isStopped ? onStart : undefined}
+          disabled={!isStopped}
+          aria-busy={isStarting || isRestarting}
+          className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 disabled:opacity-50"
+        >
+          {primaryLabel}
+        </button>
+        <button
+          onClick={onStop}
+          disabled={isStopped}
+          className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 disabled:opacity-50"
+        >
+          Stop
+        </button>
         <button onClick={onEdit} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Edit</button>
         <button onClick={onLogs} className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20">Logs</button>
         <button onClick={onKill} title="Kill process tree" className="rounded-md bg-rose-600/80 px-3 py-1.5 text-sm text-white hover:bg-rose-600">Kill</button>

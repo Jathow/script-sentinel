@@ -58,7 +58,14 @@ export function LogsDrawer({
     URL.revokeObjectURL(url);
   };
 
-  const lines = React.useMemo(() => filtered.split(/\r?\n/), [filtered]);
+  const lines = React.useMemo(() => {
+    const arr = filtered.split(/\r?\n/);
+    if (!scriptId && arr.length === 1 && arr[0] === '') return arr;
+    if (arr.length === 1 && arr[0] === '') {
+      return ['No logs yet. If the process prints to stdout/stderr, output will appear here.'];
+    }
+    return arr;
+  }, [filtered, scriptId]);
 
   return (
     <div
